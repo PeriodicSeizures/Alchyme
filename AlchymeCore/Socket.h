@@ -1,0 +1,108 @@
+#pragma once
+#include <string>
+#include "Packet.h"
+
+#include <asio.hpp>
+#include "AsyncQueue.hpp"
+#include <memory>
+
+class ISocket {
+public:
+	//virtual ~ISocket() = 0;
+
+	virtual bool IsConnected() = 0;
+	virtual void Send(Packet pkg) = 0; // Add packet to Queue
+	virtual Packet Recv() = 0; // Pop front packets one by one
+	virtual int GetSendQueueSize() = 0;
+	virtual int GetCurrentSendRate() = 0;
+	//virtual bool IsHost() = 0;
+	virtual bool GotNewData() = 0;
+	virtual void Close() = 0;
+	//virtual std::string GetEndPointString() = 0;
+	//virtual void GetAndResetStats(int &totalSent, int &totalRecv) = 0;
+	virtual void GetConnectionQuality(float &localQuality, float &remoteQuality, int &ping, float &outByteSec, float &inByteSec) = 0;
+	virtual void Accept() = 0;
+	//virtual int GetHostPort() = 0;
+	//virtual bool Flush() = 0; // Send all data and clear packet queue
+	//virtual std::string GetHostName() = 0;
+};
+
+// Basic connection with its own defined implementation
+class AsioSocket : ISocket, public std::enable_shared_from_this<AsioSocket> {
+	//asio::io_context _io_context;
+	//tcp::acceptor _acceptor;
+
+	asio::ip::tcp::socket m_socket;
+	AsyncDeque<Packet> m_sendQueue;
+	AsyncDeque<Packet> m_recvQueue;
+
+	bool m_connected;
+
+	Packet temp_packet;
+	//int temp_size;
+
+	asio::steady_timer m_ping_timer;
+	asio::steady_timer m_pong_timer;
+	std::atomic<int> m_ping;
+	std::chrono::steady_clock::time_point m_last_ping;
+
+public:
+	typedef std::shared_ptr<AsioSocket> ptr;
+
+	AsioSocket(asio::io_context& ctx, asio::ip::tcp::socket socket);
+	//~AsioSocket();
+
+	bool IsConnected() override;
+	void Send(Packet pkg) override;
+	Packet Recv() override;
+	int GetSendQueueSize() override;
+	int GetCurrentSendRate() override;
+	//bool IsHost() override;
+	bool GotNewData() override;
+	void Close() override;
+	//std::string GetEndPointString() override;
+	//void GetAndResetStats(int& totalSent, int& totalRecv) override;
+	void GetConnectionQuality(float& localQuality, float& remoteQuality, int& ping, float& outByteSec, float& inByteSec) override;
+	void Accept() override;
+	//int GetHostPort() override;
+	//bool Flush() override; // Send all data and clear packet queue
+	//std::string GetHostName() override;
+
+
+
+private:
+	void CheckPing();
+	void CheckPong();
+
+	void ReadHeader();
+	void ReadBody();
+	void WriteHeader();
+	void WriteBody();
+
+	// log all incoming packets
+};
+
+// Basic connection with its own defined implementation
+//class SteamSocket : ISocket {
+//	//steam socket here
+//	// My implementation will be client only, so no weird server code needed
+//
+//public:
+//	SteamSocket();
+//
+//	bool IsConnected() override;
+//	void Send(Packet pkg) override;
+//	Packet Recv() override;
+//	int GetSendQueueSize() override;
+//	int GetCurrentSendRate() override;
+//	bool IsHost() override;
+//	bool GotNewData() override;
+//	void Close() override;
+//	std::string GetEndPointString() override;
+//	void GetAndResetStats(int& totalSent, int& totalRecv) override;
+//	void GetConnectionQuality(float& localQuality, float& remoteQuality, int& ping, float& outByteSec, float& inByteSec) override;
+//	ISocket Accept() override;
+//	int GetHostPort() override;
+//	bool Flush() override; // Send all data and clear packet queue
+//	std::string GetHostName() override;
+//};
