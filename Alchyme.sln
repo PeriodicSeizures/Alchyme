@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AlchymeServer", "AlchymeSer
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Test", "Test\Test.vcxproj", "{A84B8BA7-7603-43AB-848D-AFE7D7BC33C5}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AlchymeClient", "AlchymeClient\AlchymeClient.vcxproj", "{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -41,6 +43,14 @@ Global
 		{A84B8BA7-7603-43AB-848D-AFE7D7BC33C5}.Release|x64.Build.0 = Release|x64
 		{A84B8BA7-7603-43AB-848D-AFE7D7BC33C5}.Release|x86.ActiveCfg = Release|Win32
 		{A84B8BA7-7603-43AB-848D-AFE7D7BC33C5}.Release|x86.Build.0 = Release|Win32
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Debug|x64.ActiveCfg = Debug|x64
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Debug|x64.Build.0 = Debug|x64
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Debug|x86.ActiveCfg = Debug|Win32
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Debug|x86.Build.0 = Debug|Win32
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Release|x64.ActiveCfg = Release|x64
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Release|x64.Build.0 = Release|x64
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Release|x86.ActiveCfg = Release|Win32
+		{0F7BA1EC-1660-470D-A4E7-B4B3C703B674}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -27,7 +27,7 @@ void Invoke(const char* name, Types... types) {
     Packet p;
     Invoke(p, types...);    
 
-    p.offset = 0;
+    p.offset = 0; // sizeof(size_t);
     std::cout << p.Read<int>() << "\n";
     std::cout << p.Read<float>() << "\n";
 
@@ -37,7 +37,7 @@ void Invoke(const char* name, Types... types) {
 // Driver code
 int main() {
     //Packet p;
-    Invoke("myFunction");// , (int)4, (float)3.14);
+    Invoke("myFunction", (int)4, (float)3.14);
 
     //p.Write((int)69);
     //p.Write((float)4.68);

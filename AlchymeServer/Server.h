@@ -10,8 +10,7 @@
 
 using namespace asio::ip;
 
-class Server final {
-private:
+class Server {
 	std::vector<NetPeer> m_peers;
 
 	// Asio stuff
@@ -21,6 +20,8 @@ private:
 
 	// Whether server is open
 	std::atomic_bool m_alive = false;
+
+	double m_elapsedTime;
 
 public:
 	Server(unsigned short port);
@@ -53,7 +54,7 @@ private:
 	/*
 	* Server logic methods
 	*/
-	void Update();
+	void Update(double dt);
 
 	// Run acceptor
 	void DoAccept();
@@ -62,8 +63,8 @@ private:
 	* Client based events / methods
 	*/
 	// how is virtual allowed with final class
-	virtual bool on_join(AsioSocket::ptr) = 0;
-	virtual void on_quit(AsioSocket::ptr) = 0;
+	bool OnJoin(AsioSocket::ptr);
+	void OnQuit(AsioSocket::ptr);
 
 };
 

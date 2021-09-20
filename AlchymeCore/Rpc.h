@@ -30,14 +30,21 @@ public:
 		Invoke_impl(p, var2...);
 	}
 
+	// Invoke("myFunction", a, b, c, ...);
 	template <typename... Types>
 	void Invoke(const char* name, Types... types) {
 		Packet p;
-		p.Write(StrHash(name));
+		p.Write(StrHash(name)); // Write name hash
+
+		// Goes down the line, writing the type
 		Invoke_impl(p, types...); // 
+
+		std::cout << "Ok1\n";
 
 		// Now send packet
 		m_socket->Send(std::move(p));
+
+		std::cout << "Ok2\n";
 	}
 
 	void Update();

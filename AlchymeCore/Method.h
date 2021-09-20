@@ -24,7 +24,7 @@ public:
 };
 
 template<class First, class...Rest>
-class Method final : IMethod {
+class Method final : public IMethod {
     using Lambda = void(*)(Rpc*, First, Rest...);
     Lambda lambda;
 

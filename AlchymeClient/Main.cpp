@@ -1,15 +1,12 @@
-#include "Server.h"
-//#include "R"
-
-void testFunc(Rpc* rpc) {
-    std::cout << "rpc: " << rpc << "\n";
-    //std::cout << "calling testFunc " << i << " " << c << " " << l << "\n";
-}
+#include <iostream>
+#include "Client.h"
 
 int main() {
-    Server server(8001);
+    Client client;
 
-    server.Start();
+    client.Connect("10.224.118.20", "8001");
+
+    client.Start();
 
 
     //Packet p = Invoke("myFunction", (int)8, true);

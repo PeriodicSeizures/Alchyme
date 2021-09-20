@@ -21,7 +21,7 @@ public:
 	//virtual std::string GetEndPointString() = 0;
 	//virtual void GetAndResetStats(int &totalSent, int &totalRecv) = 0;
 	virtual void GetConnectionQuality(float &localQuality, float &remoteQuality, int &ping, float &outByteSec, float &inByteSec) = 0;
-	virtual void Accept() = 0;
+	//virtual void Accept() = 0;
 	//virtual int GetHostPort() = 0;
 	//virtual bool Flush() = 0; // Send all data and clear packet queue
 	//virtual std::string GetHostName() = 0;
@@ -36,13 +36,13 @@ class AsioSocket : ISocket, public std::enable_shared_from_this<AsioSocket> {
 	AsyncDeque<Packet> m_sendQueue;
 	AsyncDeque<Packet> m_recvQueue;
 
-	bool m_connected;
+	bool m_connected = false;
 
-	Packet temp_packet;
+	Packet m_inPacket;
 	//int temp_size;
 
-	asio::steady_timer m_ping_timer;
-	asio::steady_timer m_pong_timer;
+	asio::steady_timer m_pingTimer;
+	asio::steady_timer m_pongTimer;
 	std::atomic<int> m_ping;
 	std::chrono::steady_clock::time_point m_last_ping;
 
@@ -50,6 +50,7 @@ public:
 	typedef std::shared_ptr<AsioSocket> ptr;
 
 	AsioSocket(asio::io_context& ctx, asio::ip::tcp::socket socket);
+	AsioSocket(asio::io_context& ctx);
 	//~AsioSocket();
 
 	bool IsConnected() override;
@@ -63,12 +64,16 @@ public:
 	//std::string GetEndPointString() override;
 	//void GetAndResetStats(int& totalSent, int& totalRecv) override;
 	void GetConnectionQuality(float& localQuality, float& remoteQuality, int& ping, float& outByteSec, float& inByteSec) override;
-	void Accept() override;
+	//void Accept() override;
 	//int GetHostPort() override;
 	//bool Flush() override; // Send all data and clear packet queue
 	//std::string GetHostName() override;
 
+	//void ConnectToHost(asio::io_context& ctx, std::string host, std::string port);
 
+	void Start();
+
+	asio::ip::tcp::socket &GetSocket();
 
 private:
 	void CheckPing();

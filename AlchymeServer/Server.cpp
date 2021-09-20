@@ -11,21 +11,18 @@ void Server::Start() {
 	DoAccept();
 
 	m_alive = true;
-	m_ctxThread = std::thread([this]() {
-		m_ctx.run();
-	});
+	m_ctxThread = std::thread([this]() {m_ctx.run(); });
 
 	auto last_tick = std::chrono::steady_clock::now();
 	while (m_alive) {
 		const auto now = std::chrono::steady_clock::now();
 
-		auto ticks_elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
-
-		//on_tick(((float)ticks_elapsed) / 1000000.f);
-		Update();
+		auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
+		Update((double)dt / 1000000.);
 		last_tick = std::chrono::steady_clock::now();
-		//std::this_thread::sleep_for(std::chrono::milliseconds(50));
-		//precise_sleep(0.05);
+
+		// reduces cpu usage
+		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 
@@ -39,10 +36,24 @@ void Server::Stop() {
 	m_ctx.restart();
 }
 
-void Server::Update() {
+void Server::Update(double dt) {
 
+	//std::cout << "time running: " << m_elapsedTime << "\n";
+
+	m_elapsedTime += dt;
 	// Update everything down the chain
 	// iterate peers, and update
+
+	for (auto&& it = m_peers.begin(); it != m_peers.end();) {
+		if (!it->m_socket->IsConnected()) {
+			// remove it
+			it = m_peers.erase(it);
+		}
+		else {
+			it->m_rpc->Update();
+			++it;
+		}
+	}
 
 }
 
@@ -50,30 +61,23 @@ bool Server::IsAlive() {
 	return m_alive;
 }
 
-void Server::DoAccept()
-{
+void Server::DoAccept() {
 	m_acceptor.async_accept(
-		[this](const asio::error_code& ec, tcp::socket socket)
-		{
-			if (!ec)
-			{
-				asio::ip::tcp::endpoint endpoint = socket.remote_endpoint();
+		[this](const asio::error_code& ec, tcp::socket socket) {
+			if (!ec) {
 
-				auto conn = std::make_shared<AsioSocket>(m_ctx, std::move(socket));
+				std::cout << "Client has connected\n";
 
-				// always establish connection first
-				// handshake will be blocking
+				NetPeer peer;
+				peer.m_socket = std::make_shared<AsioSocket>(m_ctx, std::move(socket));
+				peer.m_rpc = std::make_unique<Rpc>(peer.m_socket);
 
-				// Whether to accept or deny the connection
-				if (on_join(conn)) {
-					conn->Accept();
-					m_peers.push_back(NetPeer(conn));
-				}
-				else {
-					/*
-					* something to do on deny ...
-					*/
-				}
+				peer.m_socket->Start();
+
+				// register and invoke RPCS at this point
+				peer.m_rpc->Invoke("print", 1);
+
+				m_peers.push_back(std::move(peer));				
 			}
 
 			DoAccept();
@@ -81,3 +85,10 @@ void Server::DoAccept()
 
 }
 
+bool Server::OnJoin(AsioSocket::ptr) {
+	return true;
+}
+
+void Server::OnQuit(AsioSocket::ptr) {
+	// to do something when
+}
