@@ -31,6 +31,9 @@ public:
 	}
 
 	// Invoke("myFunction", a, b, c, ...);
+	// This implementation allows for no RPC arguments
+	// Need to make the method instantiator also
+	// take 0 arguments when needed
 	template <typename... Types>
 	void Invoke(const char* name, Types... types) {
 		Packet p;
@@ -39,12 +42,8 @@ public:
 		// Goes down the line, writing the type
 		Invoke_impl(p, types...); // 
 
-		std::cout << "Ok1\n";
-
 		// Now send packet
 		m_socket->Send(std::move(p));
-
-		std::cout << "Ok2\n";
 	}
 
 	void Update();
