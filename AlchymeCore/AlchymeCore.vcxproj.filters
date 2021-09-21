@@ -24,9 +24,6 @@
     <ClCompile Include="Socket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NetPeer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rpc.h">
@@ -48,6 +45,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Vec2.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FastUnorderedList.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -25,6 +25,7 @@ public:
 
 	template <typename T, typename... Types>
 	void Append_impl(Packet& p, T var1, Types... var2) {
+
 		p.Write(var1);
 
 		Append_impl(p, var2...);
@@ -38,7 +39,8 @@ public:
 	template <typename... Types>
 	void Invoke(const char* name, Types... types) {
 		Packet p;
-		p.Write(StrHash(name)); // Write name hash
+		auto hash = StrHash(name); 
+		p.Write(hash);
 
 		// Goes down the line, writing the type
 		Append_impl(p, types...); // 

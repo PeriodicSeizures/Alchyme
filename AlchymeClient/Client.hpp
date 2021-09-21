@@ -2,21 +2,23 @@
 #include "IClient.h"
 
 namespace {
-	void RPC_Print(Rpc* rpc, int a) {
-		std::cout << "Remote arguments: " << a << "\n";
+	void RPC_ClientHandshake(Rpc* rpc, bool needPassword) {
+
 	}
 
-	void RPC_NoArgs(Rpc* rpc) {
-		std::cout << "I was remotely called with no args!\n";
+	void RPC_Print(Rpc* rpc, std::string s) {
+		std::cout << "Remote print: " << s << "\n";
 	}
+
+	//void RPC_Pos(Rpc* rpc, )
 }
 
 class Client : public IClient {
 	void Update(float dt) override {}
 
 	void ConnectCallback(Rpc* rpc) override {
-		rpc->Register("print", new Method(RPC_Print));
-		rpc->Register("noargs", new Method(RPC_NoArgs));
+		rpc->Register("ClientHandshake", new Method(RPC_ClientHandshake));
+		rpc->Register("Print", new Method(RPC_Print));
 	}
 
 	void DisconnectCallback(Rpc* rpc) override {}

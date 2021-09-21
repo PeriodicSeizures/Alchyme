@@ -16,7 +16,7 @@ void Rpc::Update() {
 		Packet packet = m_socket->Recv();
 
 		// First size_t is the function name hash
-		size_t hash = packet.Read<size_t>();
+		size_t hash; packet.Read(hash);
 		// find method in stored
 		auto&& find = m_methods.find(hash);
 		if (find != m_methods.end()) {

@@ -144,19 +144,20 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="NetPeer.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="Rpc.cpp" />
     <ClCompile Include="Socket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncQueue.hpp" />
+    <ClInclude Include="FastUnorderedList.hpp" />
     <ClInclude Include="Method.h" />
     <ClInclude Include="NetPeer.h" />
     <ClInclude Include="Packet.h" />
     <ClInclude Include="Rpc.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="Utils.h" />
+    <ClInclude Include="Vec2.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

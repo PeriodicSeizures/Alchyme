@@ -30,7 +30,8 @@ class Method final : public IMethod {
 
     template<class F>
     auto Invoke_impl(Packet p) {
-        std::tuple<F> a{ p.Read<F>() };
+        F f; p.Read(f);
+        std::tuple<F> a{ f };
         return a;
     }
 
@@ -38,7 +39,8 @@ class Method final : public IMethod {
     // Add that param from Packet into tuple
     template<class F, class S, class...R>
     auto Invoke_impl(Packet p) {
-        std::tuple<F> a{ p.Read<F>() };
+        F f; p.Read(f);
+        std::tuple<F> a{ f };
         std::tuple<S, R...> b = Invoke_impl<S, R...>(p);
         return std::tuple_cat(a, b);
     }
