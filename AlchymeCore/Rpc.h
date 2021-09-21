@@ -39,7 +39,7 @@ public:
 	template <typename... Types>
 	void Invoke(const char* name, Types... types) {
 		Packet p;
-		auto hash = StrHash(name); 
+		auto hash = StrHash(name);
 		p.Write(hash);
 
 		// Goes down the line, writing the type

@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include <stdexcept>
 
 struct Packet {
     std::size_t offset = 0;
@@ -8,6 +9,8 @@ struct Packet {
     
     template<typename T>
     void Read(T &out) {
+        if (offset + sizeof(T) > m_buf.size())
+            throw std::range_error("Reading out of bounds");
         std::memcpy(&out, m_buf.data() + offset, sizeof(T));
         offset += sizeof(T);
     }

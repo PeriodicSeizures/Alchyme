@@ -4,7 +4,10 @@
 
 struct NetPeer {
 	//std::shared_ptr<AsioSocket> m_socket;
-	std::unique_ptr<Rpc> m_rpc;
+	Rpc *m_rpc;
 	size_t m_uid;
 	std::string name;
+
+public:
+	NetPeer(Rpc* rpc);
 };

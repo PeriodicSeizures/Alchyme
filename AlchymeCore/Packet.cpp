@@ -10,7 +10,12 @@
 //}
 
 void Packet::Read(std::string &out) {
-    size_t size; Read(size); out.resize(size);
+    size_t size; Read(size); 
+    
+    if (offset + size > m_buf.size())
+        throw std::range_error("Reading out of bounds");
+    
+    out.resize(size);
     std::memcpy(out.data(), m_buf.data() + offset, size);
     offset += size;
 }

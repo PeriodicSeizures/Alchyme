@@ -20,7 +20,12 @@ void Rpc::Update() {
 		// find method in stored
 		auto&& find = m_methods.find(hash);
 		if (find != m_methods.end()) {
-			find->second->Invoke(this, std::move(packet));
+			try {
+				find->second->Invoke(this, std::move(packet));
+			}
+			catch (std::range_error& e) {
+				std::cout << "Remote did not pass the right arguments to function\n";
+			}
 		}
 		else {
 			std::cout << "Remote tried invoking unknown function\n";

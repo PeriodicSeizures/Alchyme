@@ -2,13 +2,27 @@
 #include "IServer.h"
 #include "NetPeer.h"
 
-class Server : public IServer {
+namespace {
+	void RPC_ServerHandshake(Rpc* rpc) {
 
+	}
+}
+
+class Server : public IServer {
 	std::vector<std::unique_ptr<NetPeer>> m_peers;
+	std::string password;
+
+	//void RPC_ServerHandshake(Rpc* rpc) {
+	//
+	//}
 
 	void Update(float dt) override {}
 
 	void ConnectCallback(Rpc* rpc) override {
+		m_peers.push_back(std::make_unique<NetPeer>(rpc));
+
+		rpc->Register("ServerHandshake", new Method(RPC_ServerHandshake));
+
 		rpc->Invoke("Print", std::string("hi!"));
 	}
 
@@ -32,7 +46,7 @@ class Server : public IServer {
 
 	NetPeer* GetPeer(Rpc* rpc) {
 		for (auto&& peer : m_peers) {
-			if (peer->m_rpc.get() == rpc)
+			if (peer->m_rpc == rpc)
 				return peer.get();
 		}
 		return nullptr;

@@ -144,6 +144,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="NetPeer.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="Rpc.cpp" />
     <ClCompile Include="Socket.cpp" />
