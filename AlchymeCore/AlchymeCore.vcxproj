@@ -156,6 +156,7 @@
     <ClInclude Include="Packet.h" />
     <ClInclude Include="Rpc.h" />
     <ClInclude Include="Socket.h" />
+    <ClInclude Include="Utils.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

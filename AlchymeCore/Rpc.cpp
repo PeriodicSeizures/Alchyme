@@ -5,7 +5,6 @@ Rpc::Rpc(std::shared_ptr<AsioSocket> socket)
 
 void Rpc::Register(const char* name, IMethod *method) {
 	size_t hash = StrHash(name);
-	std::cout << "hash: " << hash << "\n";
 	m_methods.insert({ hash, method });
 }
 

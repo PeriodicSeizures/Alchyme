@@ -9,6 +9,8 @@ size_t constexpr StrHash(char const* input) {
 
 class Rpc {
 	std::unordered_map<size_t, IMethod*> m_methods;
+
+public:
 	std::shared_ptr<AsioSocket> m_socket;
 
 public:
@@ -18,29 +20,28 @@ public:
 	//								because inheritance
 	void Register(const char* name, IMethod *method);
 
-	
-
 	// part of dummy template design
-	void Invoke_impl(Packet& p) {}
+	void Append_impl(Packet& p) {}
 
 	template <typename T, typename... Types>
-	void Invoke_impl(Packet& p, T var1, Types... var2) {
+	void Append_impl(Packet& p, T var1, Types... var2) {
 		p.Write(var1);
 
-		Invoke_impl(p, var2...);
+		Append_impl(p, var2...);
 	}
 
-	// Invoke("myFunction", a, b, c, ...);
-	// This implementation allows for no RPC arguments
-	// Need to make the method instantiator also
-	// take 0 arguments when needed
+	/*
+	 * Use like 
+	 *	Invoke("myFunction", a, b, c, ...);
+	 */
+	// 
 	template <typename... Types>
 	void Invoke(const char* name, Types... types) {
 		Packet p;
 		p.Write(StrHash(name)); // Write name hash
 
 		// Goes down the line, writing the type
-		Invoke_impl(p, types...); // 
+		Append_impl(p, types...); // 
 
 		// Now send packet
 		m_socket->Send(std::move(p));
@@ -48,14 +49,3 @@ public:
 
 	void Update();
 };
-
-//class RpcServer {
-//	std::unordered_map<size_t, Rpc> m_rpcClients;
-//
-//public:
-//
-//
-//private:
-//
-//
-//};
