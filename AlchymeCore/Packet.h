@@ -9,11 +9,12 @@ struct Packet {
     
     template<typename T>
     void Read(T &out) {
-        //if (offset + sizeof(T) > m_buf.size())
-        //    throw std::range_error("Reading out of bounds");
-
-        if (m_buf.empty())
+        if (offset + sizeof(T) > m_buf.size())
             return;
+            //throw std::range_error("Reading out of bounds");
+
+        //if (m_buf.empty())
+            //return;
 
         std::memcpy(&out, m_buf.data() + offset, sizeof(T));
 

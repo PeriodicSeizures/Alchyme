@@ -3,6 +3,11 @@
 #include <functional>
 #include "Packet.h"
 
+/* https://godbolt.org/z/MMGsa8rhr
+* to implement deduction guides
+* (static functions, no class object needed)
+*/
+
 class Rpc;
 
 // Thanks @Fux
@@ -59,7 +64,11 @@ public:
         }
         else
         {
-            object->lambda(rpc);
+            // doesnt work for some reason
+            //object->lambda(rpc);
+
+            // magic
+            std::invoke(lambda, object, rpc);
         }
     }
 };
