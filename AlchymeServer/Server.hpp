@@ -8,6 +8,12 @@ namespace {
 	}
 }
 
+struct Dummy {
+	void dum(Rpc* rpc) {
+		std::cout << "Dummy::dum()\n";
+	}
+};
+
 class Server : public IServer {
 
 	std::vector<std::unique_ptr<NetPeer>> m_peers;
@@ -15,15 +21,17 @@ class Server : public IServer {
 
 	void ClassMethod(Rpc* rpc) {
 		std::cout << "ClassMethod()!\n";
-
 	}
 
 	void Update(float dt) override {}
 
 	void ConnectCallback(Rpc* rpc) override {
-		m_peers.push_back(std::make_unique<NetPeer>(rpc));
+		Dummy dummy;
+		Method<Dummy> m(&dummy, &Dummy::dum);
 
-		rpc->Register("ServerHandshake", new Method<Server>(this, &Server::ClassMethod));
+		m_peers.push_back(std::make_unique<NetPeer>(rpc));
+		//Method<Server> m(nullptr, &Server::ClassMethod);
+		//rpc->Register("ServerHandshake", new Method(this, &Server::ClassMethod));
 
 		//rpc->Invoke("Print", std::string("hi!"));
 	}
