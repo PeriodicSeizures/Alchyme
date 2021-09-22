@@ -17,8 +17,8 @@ class Client : public IClient {
 	void Update(float dt) override {}
 
 	void ConnectCallback(Rpc* rpc) override {
-		rpc->Register("ClientHandshake", new Method(RPC_ClientHandshake));
-		rpc->Register("Print", new Method(RPC_Print));
+		//rpc->Register("ClientHandshake", new Method(RPC_ClientHandshake));
+		//rpc->Register("Print", new Method(RPC_Print));
 	}
 
 	void DisconnectCallback(Rpc* rpc) override {}

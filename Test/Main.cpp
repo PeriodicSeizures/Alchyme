@@ -1,46 +1,95 @@
+#include <tuple>
+#include <functional>
 
-// C++ program to demonstrate working of
-// Variadic function Template
+#include <cstring>
+#include <array>
+struct Packet {
+    std::array<char, 50> m_buf;
+    std::size_t offset = 0;
+
+    template<typename T>
+    void Read(T& out) {
+        std::memcpy(&out, m_buf.data() + offset, sizeof(T));
+        offset += sizeof(T);
+    }
+};
+
+class Rpc;
+
+// Thanks @Fux
+template <class C, class Tuple, class F, size_t... Is>
+constexpr auto invoke_tuple_impl(F f, C& c, Rpc* rpc, Tuple t,
+    std::index_sequence<Is...>) {
+    return std::invoke(f, c, rpc, std::get<Is>(t)...);
+}
+
+template <class C, class Tuple, class F>
+constexpr auto invoke_tuple(F f, C& c, Rpc* rpc, Tuple t) {
+    return invoke_tuple_impl(f, c, rpc, t, std::make_index_sequence < std::tuple_size<Tuple>{} > {});
+}
+
+template<class C, class...Args>
+class Method {
+    using Lambda = void(C::*)(Rpc*, Args...);
+
+    C object;
+    Lambda lambda;
+
+    template<class F>
+    auto Invoke_impl(Packet p) {
+        F f; p.Read(f);
+        std::tuple<F> a{ f };
+        return a;
+    }
+
+    // Split a param,
+    // Add that param from Packet into tuple
+    template<class F, class S, class...R>
+    auto Invoke_impl(Packet p) {
+        F f; p.Read(f);
+        std::tuple<F> a{ f };
+        std::tuple<S, R...> b = Invoke_impl<S, R...>(p);
+        return std::tuple_cat(a, b);
+    }
+
+public:
+    Method(C object, Lambda lam) : object(object), lambda(lam) {}
+
+    void Invoke(Rpc* rpc, Packet p) {
+        // Invoke_impl returns a tuple of types by recursion
+        if constexpr (sizeof...(Args))
+        {
+            auto tupl = Invoke_impl<Args...>(p);
+            invoke_tuple(lambda, object, rpc, tupl);
+        }
+        else
+        {
+            object->lambda(rpc);
+        }
+    }
+};
+
 #include <iostream>
-#include "Packet.h"
 
-// To handle base case of below recursive
-// Variadic function Template
-void Invoke(Packet &p) {
-    std::cout << "I am empty function and "
-        "I am called at last.\n";
-
-    // this will be called last, and so will be done
-    // so, send packet
+void testFunc(Rpc* rpc, int i, char c, long l) {
+    std::cout << "calling testFunc " << i << " " << c << " " << l << "\n";
 }
 
-// Append var1 to 
-template <typename T, typename... Types>
-void Invoke(Packet &p, T var1, Types... var2) {
-    p.Write(var1);
-
-    Invoke(p, var2...);
+void testFunc2(Rpc* rpc)
+{
+    std::cout << "calling testFunc2()\n";
 }
 
-template <typename... Types>
-void Invoke(const char* name, Types... types) {
+struct Test {
+    void func(Rpc*, int, char) {
+        std::cout << "calling Test::func()\n";
+    }
+};
+
+int main()
+{
+    Test t;
+    Method<Test, int, char> m(t, &Test::func);
     Packet p;
-    Invoke(p, types...);    
-
-    p.offset = 0; // sizeof(size_t);
-    std::cout << p.Read<int>() << "\n";
-    std::cout << p.Read<float>() << "\n";
-
-    std::cout << "Sending packet for remote invocation!\n";
-}
-
-// Driver code
-int main() {
-    //Packet p;
-    Invoke("myFunction", (int)4, (float)3.14);
-
-    //p.Write((int)69);
-    //p.Write((float)4.68);
-
-    return 0;
+    m.Invoke(nullptr, p);
 }

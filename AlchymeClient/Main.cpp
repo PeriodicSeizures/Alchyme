@@ -1,7 +1,22 @@
 #include <iostream>
 #include "Client.hpp"
 
-int main() {
+struct Test {
+    void func(Rpc*, int, char) {
+        std::cout << "calling Test::func()\n";
+    }
+};
+
+int main()
+{
+    Test t;
+    Method<Test, int, char> m(&t, &Test::func);
+    Packet p;
+    m.Invoke(nullptr, p);
+
+
+
+
     Client client;
 
     std::cout << "Enter the address: <host> <port>: ";

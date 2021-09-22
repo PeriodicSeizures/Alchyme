@@ -9,21 +9,23 @@ namespace {
 }
 
 class Server : public IServer {
+
 	std::vector<std::unique_ptr<NetPeer>> m_peers;
 	std::string password;
 
-	//void RPC_ServerHandshake(Rpc* rpc) {
-	//
-	//}
+	void ClassMethod(Rpc* rpc) {
+		std::cout << "ClassMethod()!\n";
+
+	}
 
 	void Update(float dt) override {}
 
 	void ConnectCallback(Rpc* rpc) override {
 		m_peers.push_back(std::make_unique<NetPeer>(rpc));
 
-		rpc->Register("ServerHandshake", new Method(RPC_ServerHandshake));
+		rpc->Register("ServerHandshake", new Method<Server>(this, &Server::ClassMethod));
 
-		rpc->Invoke("Print", std::string("hi!"));
+		//rpc->Invoke("Print", std::string("hi!"));
 	}
 
 	void DisconnectCallback(Rpc* rpc) override {}
