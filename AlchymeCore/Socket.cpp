@@ -85,6 +85,7 @@ bool AsioSocket::GotNewData() {
 }
 
 void AsioSocket::Close() {
+	//return;
 	if (m_connected) {
 		LOG_DEBUG("AsioSocket::Close()\n");
 		m_wasDisconnected = true;
@@ -97,6 +98,13 @@ void AsioSocket::Close() {
 		m_socket.close(ec);
 	}
 }
+
+//void AsioSocket::CloseAfterNextSends() {
+//	//if (m_sendQueue.empty())
+//	//	Close();
+//	//else
+//		doCloseAfterSends = true;
+//}
 
 void AsioSocket::GetConnectionQuality(float& localQuality, float& remoteQuality, int& ping, float& outByteSec, float& inByteSec) {
 	// do nothing
@@ -143,7 +151,7 @@ void AsioSocket::ReadHeader() {
 				}
 			}
 			else {
-				//LOG_DEBUG("read header error: %s\n", e.message().c_str());
+				LOG_DEBUG("read header error: %s\n", e.message().c_str());
 				Close();
 			}
 		}
@@ -169,7 +177,7 @@ void AsioSocket::ReadBody() {
 					ReadHeader();
 				}
 				else {
-					//LOG_DEBUG("read body error: %s\n", e.message().c_str());
+					LOG_DEBUG("read body error: %s\n", e.message().c_str());
 					Close();
 				}
 			}
@@ -201,7 +209,7 @@ void AsioSocket::WriteHeader() {
 				//if (e.value() != asio::error::operation_aborted) {
 				//	
 				//}
-				//LOG_DEBUG("write header error: %s\n", e.message().c_str());
+				LOG_DEBUG("write header error: %s\n", e.message().c_str());
 				Close();
 			}
 		}
@@ -218,22 +226,35 @@ void AsioSocket::WriteBody() {
 		//m_sendQueue.pop_front();
 		if (!m_sendQueue.empty())
 			WriteHeader();
+		//else if (doCloseAfterSends)
+		//	Close();
 	} else {
+		//std::string b(front.m_buf.data(), front.offset);
+		//std::cout << "Sending: " << b << "\n";
+
 		auto self(shared_from_this());
 		asio::async_write(m_socket,
 			asio::buffer(front.m_buf.data(), front.offset),
 			[this, self](const std::error_code& e, size_t) {
 				if (!e) {
-					//LOG_DEBUG("write_body()\n");
-
+					LOG_DEBUG("write_body()\n");
 					//out_packets.pop_front();
 					//m_sendQueue.pop_front();
 
+					std::cout << "sendQueue: " << m_sendQueue.count() << "\n";
+
 					if (!m_sendQueue.empty())
 						WriteHeader();
+					//lse if (doCloseAfterSends) {
+					//	//asio::post()
+					//	std::this_thread::sleep_for(std::chrono::seconds(15));
+					//	//m_socket.close();
+					//	//m_socket.get
+					//	Close();
+					//
 				}
 				else {
-					//LOG_DEBUG("write body error: %s\n", e.message().c_str());
+					LOG_DEBUG("write body error: %s\n", e.message().c_str());
 					Close();
 				}
 			}

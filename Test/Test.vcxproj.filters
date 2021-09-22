@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TestPtrMethod.cpp">
+    <ClCompile Include="TestAsyncInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

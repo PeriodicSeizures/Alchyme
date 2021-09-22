@@ -8,6 +8,9 @@ struct NetPeer {
 	size_t m_uid;
 	std::string name;
 
-public:
+//public:
+	NetPeer();
 	NetPeer(Rpc* rpc);
+	
+
 };

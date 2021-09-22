@@ -47,7 +47,7 @@ public:
 	/*
 	* Disconnect(...): sever a connection
 	*/
-	void Disconnect(Rpc *rpc);
+	void Disconnect(Rpc *rpc); // , bool doCloseAfterSends = false
 
 private:
 	/*

@@ -44,8 +44,9 @@ class AsioSocket : ISocket, public std::enable_shared_from_this<AsioSocket> {
 	AsyncDeque<Packet> m_sendQueue;
 	AsyncDeque<Packet> m_recvQueue;
 
-	bool m_connected = false;
-	bool m_wasDisconnected = false;
+	std::atomic<bool> m_connected = false;
+	std::atomic<bool> m_wasDisconnected = false;
+	//std::atomic<bool> doCloseAfterSends = false;
 
 	Packet m_inPacket;
 	//int temp_size;
@@ -71,6 +72,7 @@ public:
 	//bool IsHost() override;
 	bool GotNewData() override;
 	void Close() override;
+	//void CloseAfterNextSends();
 	//std::string GetEndPointString() override;
 	//void GetAndResetStats(int& totalSent, int& totalRecv) override;
 	void GetConnectionQuality(float& localQuality, float& remoteQuality, int& ping, float& outByteSec, float& inByteSec) override;

@@ -25,7 +25,7 @@ void IServer::Start() {
 
 
 		for (auto&& it = m_rpcs.begin(); it != m_rpcs.end();) {
-			if (!(*it)->m_socket->IsConnected()) {
+			if ((*it)->m_socket->WasDisconnected()) {
 				DisconnectCallback(it->get());
 				it = m_rpcs.erase(it);
 			}
@@ -56,8 +56,11 @@ bool IServer::IsAlive() {
 	return m_alive;
 }
 
-void IServer::Disconnect(Rpc* rpc) {
-	rpc->m_socket->Close();
+void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends
+	//if (doCloseAfterSends)
+	//	rpc->m_socket->CloseAfterNextSends();
+	//else
+		rpc->m_socket->Close();
 }
 
 void IServer::DoAccept() {

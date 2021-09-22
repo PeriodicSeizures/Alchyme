@@ -148,6 +148,7 @@
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="Rpc.cpp" />
     <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AsyncQueue.hpp" />
@@ -159,6 +160,7 @@
     <ClInclude Include="Socket.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="Vec2.hpp" />
+    <ClInclude Include="World.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
