@@ -64,8 +64,10 @@ bool AsioSocket::WasDisconnected() {
 void AsioSocket::Send(Packet packet) {
 	const bool was_empty = m_sendQueue.empty();
 	m_sendQueue.push_back(std::move(packet));
-	if (was_empty)
+	if (was_empty) {
+		LOG_DEBUG("Reinitiating Writer\n");
 		WriteHeader();
+	}
 }
 
 Packet AsioSocket::Recv() {
@@ -144,14 +146,11 @@ void AsioSocket::ReadHeader() {
 
 					ReadHeader();
 					break;
-				}
-				default: {
-					ReadBody();
-				}
+				} default: ReadBody();
 				}
 			}
 			else {
-				LOG_DEBUG("read header error: %s\n", e.message().c_str());
+				std::cerr << "read header error: " << e.message().c_str() << "\n";
 				Close();
 			}
 		}
@@ -172,12 +171,11 @@ void AsioSocket::ReadBody() {
 				if (!e) {
 					m_recvQueue.push_back({ 0, m_inPacket.m_buf });
 
-					//LOG_DEBUG("read_body()\n");
-
+					LOG_DEBUG("read_body()\n");
 					ReadHeader();
 				}
 				else {
-					LOG_DEBUG("read body error: %s\n", e.message().c_str());
+					std::cerr << "read body error: " << e.message().c_str() << "\n";
 					Close();
 				}
 			}
@@ -193,73 +191,58 @@ void AsioSocket::WriteHeader() {
 		m_last_ping = std::chrono::steady_clock::now();
 	}
 
+	LOG_DEBUG("write_header()\n");
+
 	auto self(shared_from_this());
 	asio::async_write(m_socket,
 		asio::buffer(&(m_sendQueue.front().offset), sizeof(Packet::offset)),
 
 		[this, self](const std::error_code& e, size_t) {
 			if (!e) {
-				//LOG_DEBUG("write_header()\n");
-
-				WriteBody();
+				LOG_DEBUG("Wrote header\n");
+				auto front = m_sendQueue.front();
+				if (!front.m_buf.empty()) {
+					WriteBody(std::move(front));
+				}
+				else {
+					m_sendQueue.pop_front();
+					if (!m_sendQueue.empty()) {
+						WriteHeader();
+					}
+				}
 			}
 			else {
-				//LOG_DEBUG("err")
-				std::cout << "Asio error " << e.message().c_str() << "\n";
-				//if (e.value() != asio::error::operation_aborted) {
-				//	
-				//}
-				LOG_DEBUG("write header error: %s\n", e.message().c_str());
+				std::cerr << "write header error: " << e.message().c_str() << "\n";
 				Close();
 			}
 		}
 	);
 }
 
-void AsioSocket::WriteBody() {
+void AsioSocket::WriteBody(Packet front) {
 
 	// Dont bother sending body data if vector is empty
 	
-	auto front = m_sendQueue.pop_front();
+	LOG_DEBUG("write_body()\n");
 
-	if (front.m_buf.empty()) {
-		//m_sendQueue.pop_front();
-		if (!m_sendQueue.empty())
-			WriteHeader();
-		//else if (doCloseAfterSends)
-		//	Close();
-	} else {
-		//std::string b(front.m_buf.data(), front.offset);
-		//std::cout << "Sending: " << b << "\n";
+	auto self(shared_from_this());
+	asio::async_write(m_socket,
+		asio::buffer(front.m_buf.data(), front.offset),
+		[this, self](const std::error_code& e, size_t) {
+		if (!e) {
+			LOG_DEBUG("Wrote body\n");
 
-		auto self(shared_from_this());
-		asio::async_write(m_socket,
-			asio::buffer(front.m_buf.data(), front.offset),
-			[this, self](const std::error_code& e, size_t) {
-				if (!e) {
-					LOG_DEBUG("write_body()\n");
-					//out_packets.pop_front();
-					//m_sendQueue.pop_front();
-
-					std::cout << "sendQueue: " << m_sendQueue.count() << "\n";
-
-					if (!m_sendQueue.empty())
-						WriteHeader();
-					//lse if (doCloseAfterSends) {
-					//	//asio::post()
-					//	std::this_thread::sleep_for(std::chrono::seconds(15));
-					//	//m_socket.close();
-					//	//m_socket.get
-					//	Close();
-					//
-				}
-				else {
-					LOG_DEBUG("write body error: %s\n", e.message().c_str());
-					Close();
-				}
+			m_sendQueue.pop_front();
+			if (!m_sendQueue.empty()) {
+				WriteHeader();
 			}
-		);
+		}
+		else {
+			std::cerr << "write body error: " << e.message().c_str() << "\n";
+			Close();
+		}
 	}
+	);
 }
 
 void AsioSocket::CheckPong() {

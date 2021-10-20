@@ -94,7 +94,7 @@ private:
 	void ReadHeader();
 	void ReadBody();
 	void WriteHeader();
-	void WriteBody();
+	void WriteBody(Packet front);
 
 	// log all incoming packets
 };
