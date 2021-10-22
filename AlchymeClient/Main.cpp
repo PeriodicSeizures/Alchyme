@@ -1,8 +1,7 @@
 #include <iostream>
 #include "Client.hpp"
 
-int main()
-{
+int main() {
     Client client;
 
     std::cout << "Enter the address: <host> <port>: ";
@@ -13,5 +12,13 @@ int main()
     // "10.224.118.20", "8001"
     client.Connect(host, port);
 
-    client.Start();
+    try {
+        client.Start();
+    }
+    catch (const std::exception& e) {
+        std::cout << "error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return 0;
 }

@@ -9,7 +9,7 @@
 using namespace asio::ip;
 
 class IServer {
-	//std::vector<NetPeer> m_peers;
+	// Could also store as a map<string ip, Rpc>
 	std::vector<std::unique_ptr<Rpc>> m_rpcs;
 
 	// Asio stuff
@@ -20,11 +20,11 @@ class IServer {
 	// Whether server is open
 	std::atomic_bool m_alive = false;
 
-	//double m_elapsedTime;
+	double m_timeSinceStart;
 
 public:
 	IServer(unsigned short port);
-	~IServer();
+	virtual ~IServer();
 
 	/*
 	* Start(): a blocking call to begin the server and start
@@ -48,6 +48,8 @@ public:
 	* Disconnect(...): sever a connection
 	*/
 	void Disconnect(Rpc *rpc); // , bool doCloseAfterSends = false
+
+	double getTimeSinceStart();
 
 private:
 	/*

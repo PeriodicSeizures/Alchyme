@@ -1,5 +1,8 @@
 #pragma once
 #include "IClient.h"
+#include "EngineVk.h"
+
+
 
 namespace {
 	//void RPC_Pos(Rpc* rpc, )
@@ -18,13 +21,15 @@ class Client : public IClient {
 	const std::string m_version = "1.0.0";
 	NetPeer m_peer;
 
+	//EngineVk evk;
+
 	void PasswordCallback(Rpc* rpc) {
 		std::cout << "Password: ";
-		std::string password;
-		std::cin >> password;
+		std::string key;
+		std::cin >> key;
 
 		// then send
-		rpc->Invoke("PeerInfo", m_version, m_peer.name, StrHash(password.c_str()));
+		rpc->Invoke("PeerInfo", m_version, m_peer.name, key);
 	}
 
 	/*
@@ -33,25 +38,22 @@ class Client : public IClient {
 	* 
 	*/
 
-	void RPC_ClientHandshake(Rpc* rpc, bool needPassword) {
+	void RPC_ClientHandshake(Rpc* rpc) {
 		std::cout << "ClientHandshake()!\n";
-		std::cout << "Password needed for server: " << needPassword << "\n";
 	
-		if (needPassword) {			
-			m_thrPassword = std::thread(&Client::PasswordCallback, this, rpc);
-		}
-		else {
-			rpc->Invoke("PeerInfo", m_version, m_peer.name, "");
-		}
+		m_thrPassword = std::thread(&Client::PasswordCallback, this, rpc);
 	}
 
 	void RPC_PeerInfo(Rpc* rpc,
 		size_t peerUid,
-		std::string worldName, 
 		size_t worldSeed,
 		size_t worldTime) {
 
-		std::cout << "my uid: " << peerUid << ", worldname: " << worldName << "\n";
+		std::cout <<	"my uid: " << peerUid << 
+						", worldSeed: " << worldSeed << 
+						", worldTime: " << worldTime << "\n";
+
+
 	}
 
 	void RPC_Print(Rpc* rpc, std::string s) {
@@ -88,5 +90,6 @@ class Client : public IClient {
 public:
 	Client() {
 		m_peer.name = "crazicrafter1";
+		//evk.run();
 	}
 };

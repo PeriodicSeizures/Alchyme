@@ -1,7 +1,12 @@
 #include "Rpc.h"
+#include "Utils.h"
 
 Rpc::Rpc(std::shared_ptr<AsioSocket> socket) 
 	: m_socket(socket) {}
+
+Rpc::~Rpc() {
+	LOG_DEBUG("Rpc::~Rpc()\n");
+}
 
 void Rpc::Register(const char* name, IMethod *method) {
 	size_t hash = StrHash(name);
@@ -24,11 +29,11 @@ void Rpc::Update() {
 				find->second->Invoke(this, std::move(packet));
 			}
 			catch (std::range_error& e) {
-				std::cout << "Remote did not pass the right arguments to function\n";
+				std::cerr << "Remote did not pass the right arguments to function\n";
 			}
 		}
 		else {
-			std::cout << "Remote tried invoking unknown function\n";
+			std::cerr << "Remote tried invoking unknown function\n";
 		}
 
 	}

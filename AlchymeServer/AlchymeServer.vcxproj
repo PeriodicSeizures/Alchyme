@@ -117,12 +117,14 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)AlchymeCore;C:\Users\Rico\Documents\Visual Studio 2019\Libraries\asio-1.18.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)AlchymeCore;C:\Users\Rico\Documents\Visual Studio 2019\Libraries\asio-1.18.2\include;C:\Users\Rico\Documents\Visual Studio 2019\Libraries\sqlite-amalgamation-3360000</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\Rico\Documents\Visual Studio 2019\Libraries\sqlite-amalgamation-3360000</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sqlite3_Debug_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -134,7 +136,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)AlchymeCore;C:\Users\Rico\Documents\Visual Studio 2019\Libraries\asio-1.18.2\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)AlchymeCore;C:\Users\Rico\Documents\Visual Studio 2019\Libraries\asio-1.18.2\include;C:\Users\Rico\Documents\Visual Studio 2019\Libraries\sqlite-amalgamation-3360000</AdditionalIncludeDirectories>
       <PreprocessToFile>false</PreprocessToFile>
     </ClCompile>
     <Link>
@@ -142,6 +144,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\Rico\Documents\Visual Studio 2019\Libraries\sqlite-amalgamation-3360000</AdditionalLibraryDirectories>
+      <AdditionalDependencies>sqlite3_Release_x64.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

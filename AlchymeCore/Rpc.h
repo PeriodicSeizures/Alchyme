@@ -3,9 +3,7 @@
 #include "Method.h"
 #include "Socket.h"
 
-size_t constexpr StrHash(char const* input) {
-	return *input ? static_cast<size_t>(*input) + 33 * StrHash(input + 1) : 5381;
-}
+#include "Utils.h"
 
 class Rpc {
 	std::unordered_map<size_t, IMethod*> m_methods;
@@ -15,6 +13,7 @@ public:
 
 public:
 	Rpc(std::shared_ptr<AsioSocket> m_socket);
+	~Rpc();
 
 	//									must be a ptr	
 	//								because inheritance
@@ -34,6 +33,10 @@ public:
 	/*
 	 * Use like 
 	 *	Invoke("myFunction", a, b, c, ...);
+	 * 
+	 * Packet format:
+	 *	8 bytes: hash,
+	 *  
 	 */
 	// 
 	template <typename... Types>

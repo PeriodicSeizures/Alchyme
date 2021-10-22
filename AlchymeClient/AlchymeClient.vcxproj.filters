@@ -29,5 +29,8 @@
     <ClInclude Include="Client.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EngineVk.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

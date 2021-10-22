@@ -1,13 +1,19 @@
 #include "IServer.h"
+#include "Utils.h"
 
 IServer::IServer(unsigned short port)
-	: m_acceptor(m_ctx, tcp::endpoint(tcp::v4(), port)) {}
+	: m_acceptor(m_ctx, tcp::endpoint(tcp::v4(), port)) {
+	std::cout << "Server port set to " << port << "\n";
+}
 
 IServer::~IServer() {
+	LOG_DEBUG("IServer::~IServer()\n");
 	Stop();
 }
 
 void IServer::Start() {
+
+	LOG_DEBUG("Starting server\n");
 
 	//std::cout << "Starting server on host " <<
 	//	m_acceptor.local_endpoint().address().to_string() << "\n";
@@ -19,10 +25,9 @@ void IServer::Start() {
 
 	auto last_tick = std::chrono::steady_clock::now();
 	while (m_alive) {
-		const auto now = std::chrono::steady_clock::now();
+		auto now = std::chrono::steady_clock::now();
 		auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
-		last_tick = std::chrono::steady_clock::now();
-
+		last_tick = now; // std::chrono::steady_clock::now();
 
 		for (auto&& it = m_rpcs.begin(); it != m_rpcs.end();) {
 			if ((*it)->m_socket->WasDisconnected()) {
@@ -34,8 +39,9 @@ void IServer::Start() {
 				++it;
 			}
 		}
-		Update((double)dt / 1000000.);
-		
+		Update(dt / 1000000.f);
+
+		m_timeSinceStart += dt / 1000000.f;
 
 		// reduces cpu usage
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -60,7 +66,12 @@ void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends
 	//if (doCloseAfterSends)
 	//	rpc->m_socket->CloseAfterNextSends();
 	//else
+	//if (rpc && rpc->m_socket)
 		rpc->m_socket->Close();
+}
+
+double IServer::getTimeSinceStart() {
+	return m_timeSinceStart;
 }
 
 void IServer::DoAccept() {
@@ -70,7 +81,7 @@ void IServer::DoAccept() {
 				auto rpc = std::make_unique<Rpc>(
 					std::make_shared<AsioSocket>(m_ctx, std::move(socket)));
 
-				std::cout << rpc->m_socket->GetHostName() << " has connected\n";
+				//std::cout << rpc->m_socket->GetHostName() << " has connected\n";
 
 				rpc->m_socket->Start();
 
@@ -83,7 +94,7 @@ void IServer::DoAccept() {
 				m_rpcs.push_back(std::move(rpc));
 			}
 			else {
-				std::cout << "error: " << ec.message() << "\n";
+				std::cerr << "error: " << ec.message() << "\n";
 			}
 
 			DoAccept();
