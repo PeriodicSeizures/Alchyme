@@ -35,8 +35,9 @@ class Quadtree {
 		T xOffset = m_xMin + (m_xMax - m_xMin) / 2;
 		T yOffset = m_yMin + (m_yMax - m_yMin) / 2;
 
+		// This section is correct ATM
 		m_sub[0] = std::make_unique<QTree>(m_xMin, m_yMin, xOffset, yOffset, m_depth + 1);
-		m_sub[1] = std::make_unique<QTree>(xOffset, m_yMin, xOffset, yOffset, m_depth + 1);
+		m_sub[1] = std::make_unique<QTree>(xOffset, m_yMin, m_xMax, yOffset, m_depth + 1);
 		m_sub[2] = std::make_unique<QTree>(m_xMin, yOffset, xOffset, m_yMax, m_depth + 1);
 		m_sub[3] = std::make_unique<QTree>(xOffset, yOffset, m_xMax, m_yMax, m_depth + 1);
 	}
@@ -63,13 +64,18 @@ class Quadtree {
 			y >= m_yMin && y < m_yMax;
 	}
 
+	static bool isPointWithin(T x, T y, T xMin, T yMin, T xMax, T yMax) {
+		return x >= xMin && x < xMax &&
+			y >= yMin && y < yMax;
+	}
+
 	//		|---------------------| TREE
 	//  |------------| CHECK
 	// Selection rectangle needs to know whether quadtree is outside of it 
-	bool anyOverlap(	T xMin, 
-							T yMin, 
-							T xMax, 
-							T yMax) {
+	bool anyOverlap(T xMin, 
+					T yMin, 
+					T xMax, 
+					T yMax) {
 		
 		// Return whether THAT RECT and THIS RECT overlap
 
@@ -115,37 +121,55 @@ public:
 		// If old node existed
 		if (m_allNodes.contains(node)) {
 			this->remove(node);
-			// At this point a node was successfully removed
-			// So jsut continue...
-		} else
-			m_allNodes.insert(node);
-		
-
-		// Since function is recursive across multiple subtrees
-		// when the deepest tree is reached, insert here
-		// Will insert if space
-		// 
-		if (m_nodes.size() < MAX_NODES || m_depth == MAX_DEPTH) {
-			m_nodes.insert(node);
 		}
-		else {
+
+		m_allNodes.insert(node);
+
+
+
+		if (m_sub[0]) {
+			T x, y;
+			NODE_CALLBACK(node, x, y);
+			for (auto&& sub : m_sub) {
+				if (sub->isPointWithin(x, y)) {
+					sub->insert(node);
+					break;
+				}
+			}
+			return;
+		}
+
+		m_nodes.insert(node);
+		if (m_nodes.size() > MAX_NODES && m_depth < MAX_DEPTH) {
 			// Realloc to insert in a subtree
 
 			// split
 			subdivide();
+			//LOG_DEBUG("SUBDIVIDE\n");
 
-			T x, y;
-			NODE_CALLBACK(node, x, y);
+			// R
+			for (auto&& n : m_nodes) {
+				T x, y;
+				NODE_CALLBACK(n, x, y);
+				for (auto&& sub : m_sub) {
+					if (sub->isPointWithin(x, y)) {
+						sub->insert(n);
+						break;
+					}
+				}
+			}
+
+			m_nodes.clear();
 
 			// Add node to next deepest tree 
-			if (m_sub[0]->isPointWithin(x, y))
-				m_sub[0]->insert(node);
-			else if (m_sub[1]->isPointWithin(x, y))
-				m_sub[1]->insert(node);
-			else if (m_sub[2]->isPointWithin(x, y))
-				m_sub[2]->insert(node);
-			else if (m_sub[3]->isPointWithin(x, y))
-				m_sub[3]->insert(node);
+			//if (m_sub[0]->isPointWithin(x, y))
+			//	m_sub[0]->insert(node);
+			//else if (m_sub[1]->isPointWithin(x, y))
+			//	m_sub[1]->insert(node);
+			//else if (m_sub[2]->isPointWithin(x, y))
+			//	m_sub[2]->insert(node);
+			//else if (m_sub[3]->isPointWithin(x, y))
+			//	m_sub[3]->insert(node);
 		}
 	}
 
@@ -186,26 +210,31 @@ public:
 	*/
 
 	void retrieve(std::vector<int> &nodes) {
+		nodes.insert(nodes.begin(), this->m_allNodes.begin(), this->m_allNodes.end());
+
 		// If this has child Quads
-		if (m_sub[0]) {
-			m_sub[0]->retrieve(nodes);
-			m_sub[1]->retrieve(nodes);
-			m_sub[2]->retrieve(nodes);
-			m_sub[3]->retrieve(nodes);
-		}
-		else {
-			nodes.insert(nodes.begin(), this->m_allNodes.begin(), this->m_allNodes.end());
-		}
+		//if (m_sub[0]) {
+		//	m_sub[0]->retrieve(nodes);
+		//	m_sub[1]->retrieve(nodes);
+		//	m_sub[2]->retrieve(nodes);
+		//	m_sub[3]->retrieve(nodes);
+		//}
+		//else {
+		//	nodes.insert(nodes.begin(), this->m_allNodes.begin(), this->m_allNodes.end());
+		//}
 	}
 
 	void retrieve(T x1, T y1, T x2, T y2, std::vector<int>& nodes) {
 		// Reserve ahead of time
 		nodes.reserve(m_allNodes.size());
 
+		LOG_DEBUG("RETRIEVE, all: %d, imm: %d\n", m_allNodes.size(), m_nodes.size());
+
 		// If tree is completely inside
 		if (isInsideOf(x1, y1, x2, y2)) {
 			// Get all objects in tree
 			retrieve(nodes);
+			LOG_DEBUG("INSIDE OF\n");
 		}
 		else if (anyOverlap(x1, y1, x2, y2)) {
 			// If there are SUBTREES, RECURSIVELY GET
@@ -218,7 +247,18 @@ public:
 			else {
 				// Assumes that there are no generates nodes
 				// for any node, add it
-				nodes.insert(nodes.begin(), this->m_allNodes.begin(), this->m_allNodes.end());
+
+				// Then scan each id
+				//LOG_DEBUG("FINAL-CASE, all: %d, imm: %d\n", m_allNodes.size(), m_nodes.size());
+				for (auto&& node : this->m_allNodes) {
+					T x, y;
+					NODE_CALLBACK(node, x, y);
+					LOG_DEBUG("OBJECT %d, (%f, %f)\n", node, x, y);
+					if (isPointWithin(x, y, x1, y1, x2, y2))
+						nodes.push_back(node);
+				}
+
+				//nodes.insert(nodes.begin(), this->m_allNodes.begin(), this->m_allNodes.end());
 			}
 		}
 	}
