@@ -156,6 +156,7 @@
     <ClInclude Include="Method.h" />
     <ClInclude Include="NetPeer.h" />
     <ClInclude Include="Packet.h" />
+    <ClInclude Include="Quadtree.h" />
     <ClInclude Include="Rpc.h" />
     <ClInclude Include="Socket.h" />
     <ClInclude Include="Utils.h" />
