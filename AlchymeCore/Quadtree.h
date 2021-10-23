@@ -5,6 +5,11 @@
 #include <limits>
 #include <unordered_map>
 #include <unordered_set>
+#include "Utils.h"
+
+struct Pixel {
+	unsigned char red, green, blue;
+};
 
 template<typename T, void (*NODE_CALLBACK)(int, T&, T&), int MAX_NODES = 7, int MAX_DEPTH = 6>
 class Quadtree {
@@ -201,6 +206,22 @@ public:
 		return this->m_nodes.contains(node);
 	}
 
+	void print() {
+		if (m_sub[0]) {
+			m_sub[0]->print();
+			m_sub[1]->print();
+			m_sub[2]->print();
+			m_sub[3]->print();
+		}
+		else {
+			// this is the deepest, then print
+			std::cout << "NODES: ";
+			for (auto node : m_nodes)
+				std::cout << node << ", ";
+			std::cout << "\n";
+		}
+	}
+
 	/*
 	* Now, the obvious intended purpose 
 	* of using a QuadTree is gather all
@@ -263,5 +284,55 @@ public:
 		}
 	}
 
+	static void PIXEL_AT(int i, int j,
+		unsigned char r, unsigned char g, unsigned char b,
+		std::vector<Pixel>& framebuffer,
+		int width, int height) 
+	{
+		int pitch = i + j * width;
+
+		if (pitch < framebuffer.size())
+			framebuffer[pitch] = { r, g, b };
+	}
+
+
+	//#define PIXEL_AT(x, y, r, g, b, fb, w, h) {int p = y*w + x; if (p < fb.size()) fb[p] = Pixel(r, g, b);}
+
+	void draw(std::vector<Pixel> &framebuffer, int width, int height) {
+		//for (size_t j = 0; j < height; j++) {
+		//	for (size_t i = 0; i < width; i++) {
+		//		if (i < 300)
+		//			PIXEL_AT(i, j, 0, 255, 0, framebuffer, width, height);
+		//	}
+		//}
+		//return;
+
+		// iterate, appending data
+		if (m_sub[0]) {
+			// draw sub bounds
+			for (auto&& sub : m_sub) {
+				sub->draw(framebuffer, width, height);
+			}
+		}
+		else {
+			// draw nodes
+			for (auto&& node : m_nodes) {
+				T x, y;
+				NODE_CALLBACK(node, x, y);
+				PIXEL_AT(x, y, 40, 200, 200, framebuffer, width, height);
+			}
+		}
+		
+		// draw this bounds
+		for (int x = m_xMin; x < m_xMax; x++) {
+			PIXEL_AT(x, m_yMin, 20, 180, 20, framebuffer, width, height);
+			PIXEL_AT(x, m_yMax, 20, 180, 20, framebuffer, width, height);
+		}
+		
+		for (int y = m_yMin; y < m_yMax; y++) {
+			PIXEL_AT(m_xMin, y, 20, 180, 20, framebuffer, width, height);
+			PIXEL_AT(m_xMax, y, 20, 180, 20, framebuffer, width, height);
+		}
+	}
 
 };
