@@ -3,6 +3,7 @@
 #include <fstream>
 #include <algorithm>
 #include "Quadtree.h"
+#include <chrono>
 
 struct Entity {
 	float x, y;
@@ -68,7 +69,7 @@ int main() {
 
 
 
-	Quadtree<float, my_callback> my_quadtree(100.f, 100.f, 600.f, 600.f);
+	Quadtree<float, my_callback, 7, 13> my_quadtree(10.f, 10.f, 2000.f, 2000.f);
 
 	int trials;
 	std::cout << "Enter the trials: ";
@@ -76,11 +77,14 @@ int main() {
 
 	srand(time(NULL));
 
-	std::cout << "\nEntities: \n";
+	std::cout << "\nInserting entities...\n";
+
+
+	auto BEGIN_TIME = std::chrono::steady_clock::now();
 	for (int i = 0; i < trials; i++) {
-		int id = rand() % 89999 + 10000;
-		float x = (rand() % 500) + 100;
-		float y = (rand() % 500) + 100;
+		int id = rand();
+		float x = 10 + (rand() % 2000);
+		float y = 10 + (rand() % 2000);
 
 		entity_map.insert({ id, Entity(x, y) });
 		my_quadtree.insert(id);
@@ -88,63 +92,35 @@ int main() {
 		std::cout << "id: " << id << ", (" << x << ", " << y << ")\n";
 	}
 
-
-
-	//entity_map.insert({ 9, Entity(0, 0) });
-	//entity_map.insert({ 54, Entity(100, 200) });
-	//entity_map.insert({ 46, Entity(300, -300) });
-	//entity_map.insert({ 15, Entity(-400, 50) });
-	//entity_map.insert({ 85, Entity(-300, -400) });
-	//
-	//my_quadtree.insert(9);
-	//my_quadtree.insert(54);
-	//my_quadtree.insert(46);
-	//my_quadtree.insert(15);
-	//my_quadtree.insert(85);
-
-	my_quadtree.print();
-
-	std::cout << "\n";
+	auto NOW = std::chrono::steady_clock::now();
+	auto TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::microseconds>(NOW - BEGIN_TIME).count();
+	std::cout << "Inserted " << trials << " entities in: " << ((float)TIME_IT_TOOK/1000000.f) << "s\n---\n";
 
 	std::vector<int> ids;
-	my_quadtree.retrieve(100, 100, 600, 600, ids);
-	//my_quadtree.retrieve(-1001, -1001, 1001, 1001, ids);
 
-	std::cout << "Found: " << ids.size() << " objects\n";
+	std::cout << "Finding objects...\n";
+
+	BEGIN_TIME = std::chrono::steady_clock::now();
+	my_quadtree.retrieve(0, 0, 1000, 1000, ids);
+	//my_quadtree.retrieve(250, 250, 450, 450, ids);
+	//my_quadtree.retrieve(-1001, -1001, 1001, 1001, ids);
+	//my_quadtree.retrieve(0, 0, 2001, 2001, ids);
+
+	NOW = std::chrono::steady_clock::now();
+	TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::microseconds>(NOW - BEGIN_TIME).count();
+
+	std::cout << "Found " << ids.size() << " objects in: " << ((float)TIME_IT_TOOK / 1000000.f) << "s\n";
 	for (auto id : ids) {
 		std::cout << id << ", ";
 	}
 
+	//std::cout << '\b' << '\b';
 
-	const int width = 1024;
-	const int height = 768;
-	std::vector<Pixel> framebuffer(width * height);
+	std::cout << "\n";
 
-	for (size_t j = 0; j < height; j++) {
-		for (size_t i = 0; i < width; i++) {
-				framebuffer[i + j * width] = { 0, 0, 0 };
-		}
-	}
-	my_quadtree.draw(framebuffer, width, height);
+	my_quadtree.print();
 
-
-
-
-
-
-
-	std::ofstream ofs; // save the framebuffer to file
-	ofs.open("./out.ppm");
-	ofs << "P6\n" << width << " " << height << "\n255\n";
-	for (size_t i = 0; i < height * width; i++) {
-		auto px = framebuffer[i];
-		ofs << px.red;
-		ofs << px.green;
-		ofs << px.blue;
-	}
-	ofs.close();
-
-
+	my_quadtree.render();
 
 	return 0;
 }
