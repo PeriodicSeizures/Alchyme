@@ -9,10 +9,11 @@ struct Entity {
 	float x, y;
 };
 
-static std::unordered_map<int, Entity> entity_map;
+static std::unordered_map<int, Entity> entities;
+//static std::vector<Entity> entities;
 
 static void my_callback(int id, float& x, float& y) {
-	auto&& entity = entity_map[id];
+	auto&& entity = entities[id];
 	x = entity.x, y = entity.y;
 }
 
@@ -69,10 +70,10 @@ int main() {
 
 
 
-	Quadtree<float, my_callback, 7, 13> my_quadtree(10.f, 10.f, 2000.f, 2000.f);
+	Quadtree<float, my_callback> my_quadtree(10.f, 10.f, 2000.f, 2000.f);
 
 	int trials;
-	std::cout << "Enter the trials: ";
+	std::cout << "Input trials: ";
 	std::cin >> trials;
 
 	srand(time(NULL));
@@ -82,19 +83,25 @@ int main() {
 
 	auto BEGIN_TIME = std::chrono::steady_clock::now();
 	for (int i = 0; i < trials; i++) {
-		int id = rand();
-		float x = 10 + (rand() % 2000);
-		float y = 10 + (rand() % 2000);
+		int id = i; // rand();
+		//float x = 11 + (rand() % 1988);
+		//float y = 11 + (rand() % 1988);
 
-		entity_map.insert({ id, Entity(x, y) });
-		my_quadtree.insert(id);
+		float x = 11 + (rand() % 2000);
+		float y = 11 + (rand() % 12000);
 
-		std::cout << "id: " << id << ", (" << x << ", " << y << ")\n";
+		entities.insert({ id, Entity(x, y) });
+		if (!my_quadtree.insert(id)) {
+			std::cout << "Failed to insert: " << id << ", (" << x << ", " << y << ")\n";
+		}
+
+		//std::cout << "id: " << id << ", (" << x << ", " << y << ")\n";
 	}
 
 	auto NOW = std::chrono::steady_clock::now();
 	auto TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::microseconds>(NOW - BEGIN_TIME).count();
-	std::cout << "Inserted " << trials << " entities in: " << ((float)TIME_IT_TOOK/1000000.f) << "s\n---\n";
+	std::cout << "Inserted " << my_quadtree.size() << "/" << trials << " entities over " << ((float)TIME_IT_TOOK/1000000.f) << 
+		"s\n- - - - -\n";
 
 	std::vector<int> ids;
 
@@ -110,15 +117,11 @@ int main() {
 	TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::microseconds>(NOW - BEGIN_TIME).count();
 
 	std::cout << "Found " << ids.size() << " objects in: " << ((float)TIME_IT_TOOK / 1000000.f) << "s\n";
-	for (auto id : ids) {
-		std::cout << id << ", ";
-	}
-
-	//std::cout << '\b' << '\b';
+	//for (auto id : ids) {
+	//	std::cout << id << ", ";
+	//}
 
 	std::cout << "\n";
-
-	my_quadtree.print();
 
 	my_quadtree.render();
 

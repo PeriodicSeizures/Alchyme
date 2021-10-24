@@ -7,9 +7,6 @@
 #include <unordered_set>
 #include "Utils.h"
 
-/// Cpu or memory optimization
-//#define OPT_FOR_MEM
-
 static void itll_callback(int id, float& x, float& y) {}
 
 struct Pixel {
@@ -31,12 +28,8 @@ class Quadtree {
 	uint8_t m_depth = 0;
 
 	/// All nodes in this or sub structures
-#ifdef OPT_FOR_MEM
-	std::unordered_set<int> m_nodes;
-#else
 	std::unordered_map<int, QTree*> m_nodes;
 	QTree* m_parent;
-#endif
 
 	/// Subtree structure
 	ptr m_sub[4];
@@ -44,7 +37,7 @@ class Quadtree {
 	/// Nodes of this tree or nodes of subtree, recursively
 	//std::unordered_set<int> m_allNodes;
 
-	#define HAS_SUB (m_depth >> ((sizeof(m_depth)*8)-1))
+	#define HAS_SUB ((m_depth >> ((sizeof(m_depth)*8)-1)) & 0b1)
 	#define MARK_SUB (m_depth |= (0b1 <<((sizeof(m_depth)*8)-1)))
 	#define UNMARK_SUB (m_depth &= ~(0b1 <<((sizeof(m_depth)*8)-1)))
 	#define SUB_NOTNULL (m_sub[0] != NULL)
@@ -57,41 +50,26 @@ class Quadtree {
 
 		if (m_nodes.size() > MAX_NODES && m_depth < MAX_DEPTH) {
 
-			if (SUB_NOTNULL) {
+			if (!SUB_NOTNULL) {
 				T xOffset = m_xMin + (m_xMax - m_xMin) / 2;
 				T yOffset = m_yMin + (m_yMax - m_yMin) / 2;
 
-				m_sub[0] = std::make_unique<QTree>(m_xMin, m_yMin, xOffset, yOffset, m_depth + 1);
-				m_sub[1] = std::make_unique<QTree>(xOffset, m_yMin, m_xMax, yOffset, m_depth + 1);
-				m_sub[2] = std::make_unique<QTree>(m_xMin, yOffset, xOffset, m_yMax, m_depth + 1);
-				m_sub[3] = std::make_unique<QTree>(xOffset, yOffset, m_xMax, m_yMax, m_depth + 1);
+				m_sub[0] = std::make_unique<QTree>(m_xMin, m_yMin, xOffset, yOffset, m_depth + 1, this);
+				m_sub[1] = std::make_unique<QTree>(xOffset, m_yMin, m_xMax, yOffset, m_depth + 1, this);
+				m_sub[2] = std::make_unique<QTree>(m_xMin, yOffset, xOffset, m_yMax, m_depth + 1, this);
+				m_sub[3] = std::make_unique<QTree>(xOffset, yOffset, m_xMax, m_yMax, m_depth + 1, this);
 			}
 			MARK_SUB;
 
 			// Relocate all nodes
 			for (auto&& n : m_nodes) {
 				T x, y;
-				#ifdef OPT_FOR_MEM
-					NODE_CALLBACK(n, x, y);
-					for (auto&& sub : m_sub) {
-						if (sub->Iinsert(n))
-							break;
-					}
-				#else
-					NODE_CALLBACK(n.first, x, y);
-					for (auto&& sub : m_sub) {
-						if (sub->Iinsert(n.first))
-							break;
-					}
-				#endif
+				NODE_CALLBACK(n.first, x, y);
+				for (auto&& sub : m_sub) {
+					if (sub->Iinsert(n.first))
+						break;
+				}
 			}
-
-			// Clear immenent nodes
-			#ifdef OPT_FOR_MEM
-				m_nodes.rehash(1);
-			#else
-				m_nodes.clear();
-			#endif
 
 			return true;
 		}
@@ -143,13 +121,12 @@ class Quadtree {
 	* @param deleteSubs Delete subtree instead of only marking
 	*/
 	bool collapse() {
-		UNMARK_SUB;
-
-		#ifdef OPT_FOR_MEM
-			for (auto&& sub : m_sub) {
-				sub.reset();
+		if (HAS_SUB)
+			if (m_nodes.size() <= MAX_NODES) {
+				UNMARK_SUB;
+				return true;
 			}
-		#endif
+		return false;
 	}
 
 	/**
@@ -215,28 +192,37 @@ class Quadtree {
 		T x, y;
 		NODE_CALLBACK(node, x, y);
 		if (!this->isPointWithin(x, y))
-			return NULL;
-
-		#ifdef OPT_FOR_MEM
-			m_nodes.insert(node);
-		#endif
+			return NULL; // The 1st real returned value
 
 		if (HAS_SUB) {
 			QTree* deepest;
 			for (auto&& sub : m_sub) {
 				if (deepest = sub->Iinsert(node)) {
-					#ifdef OPT_FOR_MEM
-					#else
-						m_nodes.insert({ node, deepest });
-					#endif
+					m_nodes.insert({ node, deepest }); // Recursive returned value
 					return deepest;
 				}
 			}
 			throw std::runtime_error("This scope should not be reached!\n");
 		}
 
+		m_nodes.insert({ node, this });
+
 		subdivide();
+
+		// The 2nd real returned value
 		return this;
+	}
+
+	/**
+	 * @brief Internal use to remove all nodes through parents
+	 * @param node
+	 * @return
+	*/
+	void IremoveUp(int node) {
+		if (m_nodes.erase(node)) {
+			if (m_parent)
+				m_parent->IremoveUp(node);
+		}
 	}
 
 public:
@@ -262,23 +248,10 @@ public:
 	* or Simple insertion.
 	*/
 	bool insert(int node) {
-
 		// Remove any traces of old node
 		this->remove(node);
 
 		return this->Iinsert(node);
-	}
-
-	/**
-	 * @brief Internal use to remove all nodes through parents
-	 * @param node 
-	 * @return 
-	*/
-	void IremoveUp(int node) {
-		if (m_nodes.erase(node)) {
-			if (m_parent)
-				m_parent->IremoveUp(node);
-		}
 	}
 
 	/**
@@ -287,47 +260,25 @@ public:
 	 * @return Whether the node was present
 	*/
 	bool remove(int node) {
-		// If node is anywhere in the tree
-	#ifdef OPT_FOR_MEM
-		if (m_nodes.erase(node)) {
-	#else
+		// Find the deepest Tree of this node
+		// Get ready to remove it
 		auto&& find = m_nodes.find(node);
 		if (find != m_nodes.end()) {
-			#endif
-			// If theres a subtree
-			if (HAS_SUB) {
-				// If collapsing failed, then subnodes still exist
-				// therefore remove the node in subs
-				if (!collapse()) {
-					#ifdef OPT_FOR_MEM
-						for (auto&& sub : m_sub) {
-							if (sub->remove(node))
-								break;
-						}
-					#else
-						// Go to the Tree pointed to by node, and remove all upstream
-						find->second->IremoveUp(node);
-					#endif
-				}
-				else // Erase it again, because it was readded by a successful collapse()
-					m_nodes.erase(node);
-			}
+			find->second->IremoveUp(node);
+
+			collapse();
+
 			return true;
 		}
 		else
 			return false; // Else, its impossible to remove a node that was never present
-	#endif
 	}
 
 	/**
 	 * @brief
 	*/
 	void clear() {
-		#ifdef OPT_FOR_MEM
-			m_nodes.rehash(1);
-		#else
-			m_nodes.clear();
-		#endif
+		m_nodes.clear();
 		collapse();
 	}
 
@@ -335,59 +286,51 @@ public:
 		return m_nodes.contains(node);
 	}
 
+	size_t size() {
+		return m_nodes.size();
+	}
+
 	/**
 	 * @brief Get all nodes in this tree
 	 * @param nodes The vector to add to
 	*/
 	void retrieve(std::vector<int> &nodes) {
-		nodes.insert(nodes.begin(), this->m_nodes.begin(), this->m_nodes.end());
+		for (auto&& node : this->m_nodes)
+			nodes.push_back(node.first);
 	}
 
 	void retrieve(T x1, T y1, T x2, T y2, std::vector<int>& nodes) {
-		// Reserve ahead of time
-		nodes.reserve(m_nodes.size());
+		// Reserve for max possible nodes to add
+		nodes.reserve(this->m_nodes.size());
 
-		//LOG_DEBUG("RETRIEVE, all: %d, imm: %d\n", m_allNodes.size(), m_nodes.size());
-
-		// If tree is completely inside
+		// If tree is completely inside selection
 		if (isInsideOf(x1, y1, x2, y2)) {
-			// Get all objects in tree
+			// Return everything
 			retrieve(nodes);
-			//LOG_DEBUG("INSIDE OF\n");
 		}
 		else if (anyOverlap(x1, y1, x2, y2)) {
-			// If there are SUBTREES, RECURSIVELY GET
+			// If even a slight touch, scan subs and self
 			if (HAS_SUB) {
 				for (auto&& sub : m_sub) {
 					sub->retrieve(x1, y1, x2, y2, nodes);
 				}
 			}
 			else {
-				// Assumes that there are no generates nodes
-				// for any node, add it
-
-				// Then scan each id
-				//LOG_DEBUG("FINAL-CASE, all: %d, imm: %d\n", m_allNodes.size(), m_nodes.size());
+				// Scan each node
 				for (auto&& node : this->m_nodes) {
 					T x, y;
-					NODE_CALLBACK(node, x, y);
+					NODE_CALLBACK(node.first, x, y);
 					if (isPointWithin(x, y, x1, y1, x2, y2))
-						nodes.push_back(node);
+						nodes.push_back(node.first);
 				}
-
-				//nodes.insert(nodes.begin(), this->m_allNodes.begin(), this->m_allNodes.end());
 			}
 		}
 	}
-
+	
 	void retrieve(T x, T y, T radius, std::vector<int>& nodes) {
 
 		// return the objects found in a specific radius 
 
-	}
-
-	void print() {
-		std::cout << "Tree contains: " << m_nodes.size() << " total subnodes\n";
 	}
 
 	static void PIXEL_AT(int i, int j,
@@ -454,7 +397,7 @@ public:
 			// draw nodes
 			for (auto&& node : m_nodes) {
 				T x, y;
-				NODE_CALLBACK(node, x, y);
+				NODE_CALLBACK(node.first, x, y);
 				PIXEL_AT(x, y, 40, 200, 200, framebuffer, width, height);
 			}
 		}
