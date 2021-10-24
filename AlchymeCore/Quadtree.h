@@ -40,7 +40,7 @@ class Quadtree {
 	#define HAS_SUB ((m_depth >> ((sizeof(m_depth)*8)-1)) & 0b1)
 	#define MARK_SUB (m_depth |= (0b1 <<((sizeof(m_depth)*8)-1)))
 	#define UNMARK_SUB (m_depth &= ~(0b1 <<((sizeof(m_depth)*8)-1)))
-	#define SUB_NOTNULL (m_sub[0] != NULL)
+	#define SUB_ISNULL (m_sub[0] == NULL)
 
 	/**
 	 * @brief Try to split into 4 subtrees, depending on node count and depth
@@ -50,7 +50,7 @@ class Quadtree {
 
 		if (m_nodes.size() > MAX_NODES && m_depth < MAX_DEPTH) {
 
-			if (!SUB_NOTNULL) {
+			if (SUB_ISNULL) {
 				T xOffset = m_xMin + (m_xMax - m_xMin) / 2;
 				T yOffset = m_yMin + (m_yMax - m_yMin) / 2;
 
@@ -60,16 +60,16 @@ class Quadtree {
 				m_sub[3] = std::make_unique<QTree>(xOffset, yOffset, m_xMax, m_yMax, m_depth + 1, this);
 			}
 			MARK_SUB;
+			
+
 
 			// Relocate all nodes
 			for (auto&& n : m_nodes) {
-				T x, y;
-				NODE_CALLBACK(n.first, x, y);
-				for (auto&& sub : m_sub) {
-					if (sub->Iinsert(n.first))
-						break;
-				}
+				// Insert initial time without checking since it is guaranteed that the node belongs somewhere in this tree
+				IinsertNoCheck(n.first);
 			}
+
+			//m_nodes.clear();
 
 			return true;
 		}
@@ -124,6 +124,10 @@ class Quadtree {
 		if (HAS_SUB)
 			if (m_nodes.size() <= MAX_NODES) {
 				UNMARK_SUB;
+				// Clear all sub nodes
+				for (auto&& sub : m_sub) {
+					sub->m_nodes.clear();
+				}
 				return true;
 			}
 		return false;
@@ -143,6 +147,13 @@ class Quadtree {
 	static bool isPointWithin(T x, T y, T xMin, T yMin, T xMax, T yMax) {
 		return x >= xMin && x < xMax &&
 			y >= yMin && y < yMax;
+	}
+
+	static bool isPointWithin(T x, T y, T cx, T cy, T r) {
+		auto dx = x - cx;
+		auto dy = y - cy;
+
+		return dx * dx + dy * dy <= r* r;
 	}
 
 	/**
@@ -181,18 +192,8 @@ class Quadtree {
 			m_yMax <= yMax;
 	}
 
-	/**
-	 * @brief Insertion for internal use (is optimized by using constant behaviour assumptions)
-	 * @param node 
-	 * @return The deepest tree the node was inserted into
-	*/
-	QTree* Iinsert(int node) {
-
-		// Check if node can fit here
-		T x, y;
-		NODE_CALLBACK(node, x, y);
-		if (!this->isPointWithin(x, y))
-			return NULL; // The 1st real returned value
+	QTree* IinsertNoCheck(int node) {
+		
 
 		if (HAS_SUB) {
 			QTree* deepest;
@@ -214,15 +215,19 @@ class Quadtree {
 	}
 
 	/**
-	 * @brief Internal use to remove all nodes through parents
-	 * @param node
-	 * @return
+	 * @brief Insertion for internal use (is optimized by using constant behaviour assumptions)
+	 * @param node 
+	 * @return The deepest tree the node was inserted into
 	*/
-	void IremoveUp(int node) {
-		if (m_nodes.erase(node)) {
-			if (m_parent)
-				m_parent->IremoveUp(node);
-		}
+	QTree* Iinsert(int node) {
+
+		// Check if node can fit here
+		T x, y;
+		NODE_CALLBACK(node, x, y);
+		if (!this->isPointWithin(x, y))
+			return NULL; // The 1st real returned value
+
+		return this->IinsertNoCheck(node);
 	}
 
 public:
@@ -251,6 +256,8 @@ public:
 		// Remove any traces of old node
 		this->remove(node);
 
+		//m_nodes.insert({ node, this });
+
 		return this->Iinsert(node);
 	}
 
@@ -264,9 +271,9 @@ public:
 		// Get ready to remove it
 		auto&& find = m_nodes.find(node);
 		if (find != m_nodes.end()) {
-			find->second->IremoveUp(node);
-
 			collapse();
+			//std::cout << "Removed duplicate\n";
+			m_nodes.erase(node);
 
 			return true;
 		}
@@ -327,9 +334,58 @@ public:
 		}
 	}
 	
-	void retrieve(T x, T y, T radius, std::vector<int>& nodes) {
 
-		// return the objects found in a specific radius 
+
+
+
+
+
+
+
+	// insets
+	bool isInsideOf(T x, T y, T r) {
+		auto dx = std::max(x - m_xMin, m_xMax - x);
+		auto dy = std::max(y - m_yMin, m_yMax - y);
+
+		return r * r >= dx * dx + dy * dy;
+	}
+
+	bool anyOverlap(float x, float y, float r) {
+		auto Xn = std::max(m_xMin, std::min(x, m_xMax));
+		auto Yn = std::max(m_yMin, std::min(y, m_yMax));
+
+		auto dx = Xn - x;
+		auto dy = Yn - y;
+
+		return (dx * dx + dy * dy) <= r * r;
+	}
+
+	void retrieve(T cx, T cy, T radius, std::vector<int>& nodes) {
+		// Firstly, get all subs within radius
+		nodes.reserve(this->m_nodes.size());
+	
+		if (isInsideOf(cx, cy, radius)) {
+
+			// Then return all
+			retrieve(nodes);
+
+		}
+		else if (anyOverlap(cx, cy, radius)) {
+			if (HAS_SUB) {
+				for (auto&& sub : m_sub) {
+					sub->retrieve(cx, cy, radius, nodes);
+				}
+			}
+			else {
+				// Scan each node
+				for (auto&& node : this->m_nodes) {
+					T x, y;
+					NODE_CALLBACK(node.first, x, y);
+					if (isPointWithin(x, y, cx, cy, radius))
+						nodes.push_back(node.first);
+				}
+			}
+		}
 
 	}
 
@@ -347,7 +403,7 @@ public:
 
 	//#define PIXEL_AT(x, y, r, g, b, fb, w, h) {int p = y*w + x; if (p < fb.size()) fb[p] = Pixel(r, g, b);}
 
-	void render(std::string filename = "./out.ppm") {
+	void render(/*std::vector<int>& retrieved*/) {
 
 		LOG_DEBUG("RENDERING\n");
 
@@ -363,8 +419,28 @@ public:
 
 		draw(framebuffer, width, height);
 
+
+		//std::unordered_set<int> retrieved_set(retrieved.begin(), retrieved.end());
+		for (auto&& node : m_nodes) {
+			Pixel color = {40, 200, 200};
+
+			T x, y;			
+			NODE_CALLBACK(node.first, x, y);
+
+			//if (retrieved_set.contains(node.first))
+			//	color = {200, 40, 40};
+			
+
+			PIXEL_AT(x, y, color.red, color.green, color.blue, framebuffer, width, height);
+
+			PIXEL_AT(x+1, y, color.red, color.green, color.blue, framebuffer, width, height);
+			PIXEL_AT(x, y+1, color.red, color.green, color.blue, framebuffer, width, height);
+			PIXEL_AT(x-1, y, color.red, color.green, color.blue, framebuffer, width, height);
+			PIXEL_AT(x, y-1, color.red, color.green, color.blue, framebuffer, width, height);
+		}
+
 		std::ofstream ofs; // save the framebuffer to file
-		ofs.open(filename);
+		ofs.open("./out.ppm");
 		ofs << "P6\n" << width << " " << height << "\n255\n";
 		for (size_t i = 0; i < height * width; i++) {
 			auto px = framebuffer[i];
@@ -376,29 +452,11 @@ public:
 	}
 
 	void draw(std::vector<Pixel> &framebuffer, int width, int height) {
-		//for (size_t j = 0; j < height; j++) {
-		//	for (size_t i = 0; i < width; i++) {
-		//		if (i < 300)
-		//			PIXEL_AT(i, j, 0, 255, 0, framebuffer, width, height);
-		//	}
-		//}
-		//return;
-
-
-
 		// iterate, appending data
 		if (HAS_SUB) {
 			// draw sub bounds
 			for (auto&& sub : m_sub) {
 				sub->draw(framebuffer, width, height);
-			}
-		}
-		else {
-			// draw nodes
-			for (auto&& node : m_nodes) {
-				T x, y;
-				NODE_CALLBACK(node.first, x, y);
-				PIXEL_AT(x, y, 40, 200, 200, framebuffer, width, height);
 			}
 		}
 		
