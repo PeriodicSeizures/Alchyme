@@ -16,10 +16,9 @@ void IClient::Start() {
 	auto last_tick = std::chrono::steady_clock::now();
 
 	while (m_alive) {
-		const auto now = std::chrono::steady_clock::now();
-
+		auto now = std::chrono::steady_clock::now();
 		auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
-		last_tick = std::chrono::steady_clock::now();
+		last_tick = now;
 
 		if (m_rpc) {
 			if (m_rpc->m_socket->WasDisconnected()) {
@@ -30,10 +29,12 @@ void IClient::Start() {
 				m_rpc->Update();
 			}
 		}
-		Update((float)dt / 1000000.f);
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
-	}
+		Update(dt / 1000000.f);
 
+		m_timeSinceStart += dt / 1000000.f;
+		
+		std::this_thread::sleep_for(1ms);
+	}
 }
 
 void IClient::Stop() {
@@ -67,12 +68,28 @@ void IClient::Connect(std::string host, std::string port) {
 				if (!ec) {
 					std::cout << "Successfully connected\n";
 
-					m_rpc->m_socket->Start();
-					ConnectCallback(m_rpc.get());
+					m_rpc->m_socket->Accept();
+					ConnectCallback(m_rpc.get(), ConnResult::OK);
 				}
 				else {
-					std::cout << "error: " << ec.message() << "\n";
-				}				
+					ConnResult res;
+					// 10060
+					if (ec == asio::error::timed_out) {
+						res = ConnResult::TIMEOUT;
+					}
+					else if (ec == asio::error::operation_aborted) {
+						res = ConnResult::ABORT;
+					}
+					else if (ec == asio::error::not_found) {
+						res = ConnResult::NOT_FOUND;
+					}
+					else {
+						res = ConnResult::OTHER;
+						std::cout << __LINE__ << " " << __FILE__ << " other asio error\n";
+						std::cout << "error: " << ec.value() << " " << ec.message() << "\n";
+					}
+					ConnectCallback(nullptr, res);
+				}			
 			}
 		);
 	}

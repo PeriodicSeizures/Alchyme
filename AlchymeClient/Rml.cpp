@@ -39,22 +39,24 @@ void RmlSystemInterface::GetClipboardText(Rml::String& text) {
     text = clipboard;
 }
 
+#define glCheckError() glCheckError_(__FILE__, __LINE__)
+
 RmlRenderInterface::RmlRenderInterface(RenderState& renderState)
     : State(&renderState) 
 {
     glGenVertexArrays(1, &Vao);
     glBindVertexArray(Vao);
-    glCheckError();
+    //glCheckError();
 
     glGenBuffers(1, &Ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_STREAM_DRAW);
-    glCheckError();
+    //glCheckError();
 
     glGenBuffers(1, &Vbo);
     glBindBuffer(GL_ARRAY_BUFFER, Vbo);
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_STREAM_DRAW);
-    glCheckError();
+    //glCheckError();
 
     {
         //Vertex position (2 float)
@@ -75,41 +77,41 @@ RmlRenderInterface::RmlRenderInterface(RenderState& renderState)
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-    glCheckError();
+    //glCheckError();
 }
 
 RmlRenderInterface::~RmlRenderInterface() {
     glDeleteVertexArrays(1, &Vao);
     glDeleteBuffers(1, &Vbo);
     glDeleteBuffers(1, &Ebo);
-    glCheckError();
+    //glCheckError();
 }
 
 void RmlRenderInterface::RenderGeometry(Rml::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rml::TextureHandle texture, const Rml::Vector2f& translation) {
     if (texture) {
-        AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->Activate();
-        AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->SetUniform("translation", glm::vec2(translation.x, translation.y));
+        //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->Activate();
+        //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->SetUniform("translation", glm::vec2(translation.x, translation.y));
         glBindTexture(GL_TEXTURE_2D, texture);
     }
     else {
-        AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->Activate();
-        AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->SetUniform("translation", glm::vec2(translation.x, translation.y));
+        //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->Activate();
+        //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->SetUniform("translation", glm::vec2(translation.x, translation.y));
     }
-    glCheckError();
+    //glCheckError();
 
     glBindVertexArray(Vao);
-    glCheckError();
+    //glCheckError();
 
     glBindBuffer(GL_ARRAY_BUFFER, Vbo);
     glBufferData(GL_ARRAY_BUFFER, num_vertices * sizeof(Rml::Vertex), vertices, GL_STREAM_DRAW);
-    glCheckError();
+    //glCheckError();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices * sizeof(int), indices, GL_STREAM_DRAW);
-    glCheckError();
+    //glCheckError();
 
     glDrawElements(GL_TRIANGLES, num_indices, GL_UNSIGNED_INT, 0);
-    glCheckError();
+    //glCheckError();
     glBindVertexArray(0);
 }
 
@@ -122,7 +124,7 @@ void RmlRenderInterface::EnableScissorRegion(bool enable) {
 
 void RmlRenderInterface::SetScissorRegion(int x, int y, int width, int height) {
     glScissor(x, vpHeight - (y + height), width, height);
-    glCheckError();
+    //glCheckError();
 }
 
 bool RmlRenderInterface::LoadTexture(Rml::TextureHandle& texture_handle, Rml::Vector2i& texture_dimensions, const Rml::String& source) {
@@ -139,10 +141,10 @@ bool RmlRenderInterface::GenerateTexture(Rml::TextureHandle& texture_handle, con
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glCheckError();
+    //glCheckError();
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, source_dimensions.x, source_dimensions.y, 0, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, source);
-    glCheckError();
+    //glCheckError();
 
     texture_handle = texture;
     return true;
@@ -151,17 +153,17 @@ bool RmlRenderInterface::GenerateTexture(Rml::TextureHandle& texture_handle, con
 void RmlRenderInterface::ReleaseTexture(Rml::TextureHandle texture) {
     GLuint textures = texture;
     glDeleteTextures(1, &textures);
-    glCheckError();
+    //glCheckError();
 }
 
 void RmlRenderInterface::Update(unsigned int windowWidth, unsigned int windowHeight) {
-    AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->Activate();
-    AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->SetUniform("viewportSize", windowWidth, windowHeight);
-    glCheckError();
-    AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->Activate();
-    AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->SetUniform("viewportSize", windowWidth, windowHeight);
-    AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->SetUniform("fontTexture", 0);
-    glCheckError();
+    //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->Activate();
+    //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rml")->shader->SetUniform("viewportSize", windowWidth, windowHeight);
+    //glCheckError();
+    //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->Activate();
+    //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->SetUniform("viewportSize", windowWidth, windowHeight);
+    //AssetManager::GetAsset<AssetShader>("/altcraft/shaders/rmltex")->shader->SetUniform("fontTexture", 0);
+    //glCheckError();
     vpWidth = windowWidth;
     vpHeight = windowHeight;
 }

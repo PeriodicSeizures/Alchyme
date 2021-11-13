@@ -147,7 +147,7 @@
     <ClCompile Include="NetPeer.cpp" />
     <ClCompile Include="Packet.cpp" />
     <ClCompile Include="Rpc.cpp" />
-    <ClCompile Include="Socket.cpp" />
+    <ClCompile Include="AsioSocket.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>

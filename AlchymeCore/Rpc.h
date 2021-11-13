@@ -18,6 +18,7 @@ public:
 	//									must be a ptr	
 	//								because inheritance
 	void Register(const char* name, IMethod *method);
+	void UnregisterAll();
 
 	// part of dummy template design
 	void Append_impl(Packet& p) {}

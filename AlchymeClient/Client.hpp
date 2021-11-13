@@ -1,18 +1,7 @@
 #pragma once
 #include "IClient.h"
-#include "EngineVk.h"
-
-
-
-namespace {
-	//void RPC_Pos(Rpc* rpc, )
-}
-
-static std::string getPasswordCallback() {
-	std::string answer;
-	std::cin >> answer;
-	return answer;
-}
+#include "World.h"
+//#include "EngineVk.h"
 
 class Client : public IClient {
 
@@ -24,7 +13,7 @@ class Client : public IClient {
 	//EngineVk evk;
 
 	void PasswordCallback(Rpc* rpc) {
-		std::cout << "Password: ";
+		std::cout << "Login key: ";
 		std::string key;
 		std::cin >> key;
 
@@ -39,7 +28,7 @@ class Client : public IClient {
 	*/
 
 	void RPC_ClientHandshake(Rpc* rpc) {
-		std::cout << "ClientHandshake()!\n";
+		LOG_INFO("ClientHandshake()!");
 	
 		m_thrPassword = std::thread(&Client::PasswordCallback, this, rpc);
 	}
@@ -49,9 +38,9 @@ class Client : public IClient {
 		size_t worldSeed,
 		size_t worldTime) {
 
-		std::cout <<	"my uid: " << peerUid << 
+		LOG_INFO("my uid: " << peerUid << 
 						", worldSeed: " << worldSeed << 
-						", worldTime: " << worldTime << "\n";
+						", worldTime: " << worldTime);
 
 
 	}
@@ -74,13 +63,18 @@ class Client : public IClient {
 
 	void Update(float dt) override {}
 
-	void ConnectCallback(Rpc* rpc) override {
-		rpc->Register("ClientHandshake", new Method(this, &Client::RPC_ClientHandshake));
-		rpc->Register("Print", new Method(this, &Client::RPC_Print));
-		rpc->Register("PeerInfo", new Method(this, &Client::RPC_PeerInfo));
-		rpc->Register("Error", new Method(this, &Client::RPC_Error));
+	void ConnectCallback(Rpc* rpc, ConnResult res) override {
+		if (res == ConnResult::OK) {
+			rpc->Register("ClientHandshake", new Method(this, &Client::RPC_ClientHandshake));
+			rpc->Register("Print", new Method(this, &Client::RPC_Print));
+			rpc->Register("PeerInfo", new Method(this, &Client::RPC_PeerInfo));
+			rpc->Register("Error", new Method(this, &Client::RPC_Error));
 
-		rpc->Invoke("ServerHandshake");
+			rpc->Invoke("ServerHandshake");
+		}
+		else {
+			std::cout << "Failed to connect\n";
+		}
 	}
 
 	void DisconnectCallback(Rpc* rpc) override {
@@ -89,6 +83,10 @@ class Client : public IClient {
 
 public:
 	Client() {
+		World w("myworld");
+		w.GenerateHeader("MyWorld", m_version);
+		w.Save();
+
 		m_peer.name = "crazicrafter1";
 		//evk.run();
 	}

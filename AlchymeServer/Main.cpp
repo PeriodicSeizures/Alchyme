@@ -53,12 +53,12 @@ int main() {
     //Server server;
     server = std::make_unique<Server>(std::move(settings));
 
-    try {
+    //try {
         server->Start();
-    }
-    catch (std::exception& e) {
-        std::cout << "fatal error: " << e.what() << "\n";
-    }
+    //}
+    //catch (std::exception& e) {
+    //    std::cout << "fatal error: " << e.what() << "\n";
+    //}
     
     return 0;
 }

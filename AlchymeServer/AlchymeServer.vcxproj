@@ -150,7 +150,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IServer.cpp" />
-    <ClCompile Include="TestMain_Quadtree.cpp" />
+    <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\AlchymeCore\AlchymeCore.vcxproj">

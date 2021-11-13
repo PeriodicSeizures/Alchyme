@@ -43,7 +43,6 @@ void IServer::Start() {
 
 		m_timeSinceStart += dt / 1000000.f;
 
-		// reduces cpu usage
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
@@ -83,7 +82,7 @@ void IServer::DoAccept() {
 
 				//std::cout << rpc->m_socket->GetHostName() << " has connected\n";
 
-				rpc->m_socket->Start();
+				rpc->m_socket->Accept();
 
 				ConnectCallback(rpc.get());
 

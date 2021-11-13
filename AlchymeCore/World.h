@@ -3,8 +3,11 @@
 
 class World
 {
-	std::string m_name;
+	std::string m_filename;
+	std::string m_worldname;
+	
 	size_t m_seed;
+	std::string m_version;
 
 	// split world into chunks
 
@@ -16,14 +19,19 @@ class World
 	// packet/rpc abstractions have already been handled
 	// graphics engine and physics crap remains
 
-	// 
-	void Save();
-
-	void Load();
+	//
+	
 
 public:
 	World(std::string name);
-	World(std::string name, size_t seed);
+
+	void GenerateHeader(std::string worldname,
+		std::string version, 
+		size_t seed = 0);
+
+	void Save();
+
+	void Load();
 	
 };
 

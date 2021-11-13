@@ -3,9 +3,12 @@
 #include <fstream>
 #include <sqlite3.h>
 #include <chrono>
+#include <memory>
 #include "IServer.h"
 #include "NetPeer.h"
 #include "World.h"
+
+using namespace std::chrono_literals;
 
 class Server : public IServer {
 
@@ -46,15 +49,16 @@ class Server : public IServer {
 			rpc->Invoke("Error", std::string("wrong version; need: ") + this->m_version);
 
 			// schedule a disconnect
-			DisconnectLater(rpc, std::chrono::milliseconds(100));
+			DisconnectLater(rpc, 2ms * rpc->m_socket->GetPing() + 40ms);
 			return;
 		}
 
 		if (InternalIsBanned(key)) {
 			rpc->Invoke("Error", std::string("blacklisted"));
+			rpc->UnregisterAll();
 
 			// schedule a disconnect
-			DisconnectLater(rpc, std::chrono::milliseconds(100));
+			DisconnectLater(rpc, 2ms * rpc->m_socket->GetPing() + 40ms);
 			return;
 		}
 
@@ -93,10 +97,11 @@ class Server : public IServer {
 		rpc->Register("Print", new Method(this, &Server::RPC_Print));
 		rpc->Register("PeerInfo", new Method(this, &Server::RPC_PeerInfo));
 	
-		std::cout << rpc->m_socket->GetHostName() << " has connected\n";
+		LOG_INFO(rpc->m_socket->GetHostName() << " has connected");
 	}
 
 	void DisconnectCallback(Rpc* rpc) override {
+		LOG_INFO(rpc->m_socket->GetHostName() << " has disconnected");
 		GetPeer(rpc)->m_rpc = nullptr; // Invalidate it because the object has been freed
 	}
 
@@ -172,7 +177,7 @@ class Server : public IServer {
 				row++;
 				char* banned = (char*)sqlite3_column_text(stmt, 0);
 
-				std::cout << "Banned: " << banned << "\n";
+				//std::cout << "Banned: " << banned << "\n";
 
 				if (*banned == '1') {
 					result = Result::BANNED;
@@ -192,6 +197,7 @@ class Server : public IServer {
 		for (auto&& peer : m_peers) {
 
 			if (peer->m_rpc && peer->authorized) {
+				using namespace std::chrono_literals;
 				//std::string sql = "SELECT"
 				switch (SQLCheckBan(peer->m_key)) {
 				case Result::SQL_ERROR:
@@ -201,10 +207,11 @@ class Server : public IServer {
 					peer->m_rpc->Invoke("Error", std::string("blacklisted"));
 					m_banned.insert(peer->m_key);
 					// schedule a disconnect
-					DisconnectLater(peer->m_rpc, std::chrono::milliseconds(100));
+					DisconnectLater(peer->m_rpc, 2ms * peer->m_rpc->m_socket->GetPing() + 40ms);
 					break;
 				case Result::INVALID_KEY:
 					std::cerr << "user has an invalid key\n";
+					DisconnectLater(peer->m_rpc, 2ms * peer->m_rpc->m_socket->GetPing() + 40ms);
 					break;
 				case Result::ALLOWED:
 					m_banned.erase(peer->m_key);
@@ -270,6 +277,8 @@ class Server : public IServer {
 public:
 	Server(std::unordered_map<std::string, std::string> settings) : IServer(
 		std::stoi(settings["port"])), settings(settings) {
+
+		//std::cout << "\033[1;31mbold red text\033[0m\n";
 
 
 

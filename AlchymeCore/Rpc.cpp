@@ -13,6 +13,13 @@ void Rpc::Register(const char* name, IMethod *method) {
 	m_methods.insert({ hash, method });
 }
 
+void Rpc::UnregisterAll() {
+	for (auto it = m_methods.begin(); it != m_methods.end(); it++) {
+		delete it->second;
+	}
+	m_methods.clear();
+}
+
 void Rpc::Update() {
 	/// iterate packets and execute
 	//std::cout << "Rpc::Update()\n";

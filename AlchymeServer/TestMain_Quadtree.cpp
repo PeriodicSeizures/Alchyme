@@ -9,8 +9,8 @@ struct Entity {
 	float x, y;
 };
 
-std::unordered_map<int, Entity> entities;
-//std::vector<Entity> entities(1000000);
+//std::unordered_map<int, Entity> entities;
+std::vector<Entity> entities(10000);
 
 static void my_callback(int id, float& x, float& y) {
 	auto&& entity = entities[id];
@@ -18,63 +18,50 @@ static void my_callback(int id, float& x, float& y) {
 }
 
 int main() {
-	// Randomnize seed
-	//srand(time(NULL));
-
 	std::vector<int> retrieved;
 	Quadtree<float, my_callback> my_quadtree(10.f, 10.f, 2000.f, 2000.f);
 
-	int trials;
-	std::cout << "Input trials: ";
-	std::cin >> trials;
-	std::cout << std::endl;
+
 
 	std::cout << "Inserting entities..." << std::endl;
-
 	auto BEGIN_TIME = std::chrono::steady_clock::now();
-	for (int i = 0; i < trials; i++) {
+	for (int i = 0; i < entities.size(); i++) {
 		float x = 11 + (rand() % 1988);
 		float y = 11 + (rand() % 1988);
 
-		//entities.insert({ i, Entity(x, y) });
 		entities[i] = Entity(x, y);
-		if (!my_quadtree.insert(i))
-			std::cerr << "Failed to insert: " << i << " (" << x << ", " << y << ")" << std::endl;
-
+		my_quadtree.insert(i);
 		//std::cout << "id: " << i << ", (" << x << ", " << y << ")" << std::endl;
 	}
+
+
 
 	// Benchmark time to insert
 	auto NOW = std::chrono::steady_clock::now();
 	auto TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::milliseconds>(NOW - BEGIN_TIME).count() / 1000.f;
-	std::cout << "Inserted " << my_quadtree.size() << "/" << trials << " entities over " << TIME_IT_TOOK << "s" << std::endl;
+	std::cout << "Inserted " << my_quadtree.size() << "/" << entities.size() << " entities over " << TIME_IT_TOOK << "s" << std::endl;
 	std::cout << "- - - - -" << std::endl;
 
+	float x1 = 1001, y1 = 1001, x2 = 1450, y2 = 1780;
 
+	for (int i = 0; i < 5000000; i++) {
+		auto BEGIN_TIME = std::chrono::steady_clock::now();
+		//for (int node = 0; node < entities.size(); node++) {
+		//	// get all entities within this entity
+		//	auto&& e = entities[node];
+		//	my_quadtree.retrieve(e.x, e.y, 100, retrieved);
+		//}
 
-	// Find
-	std::cout << "Finding objects..." << std::endl;
-	BEGIN_TIME = std::chrono::steady_clock::now();
-	//my_quadtree.retrieve(0, 0, 1000, 1000, retrieved);
-	my_quadtree.retrieve(500, 500, 500, retrieved);
+		my_quadtree.retrieve(x1, y1, x2, y2, retrieved);
 
-	// Benchmark time to retrieve
-	NOW = std::chrono::steady_clock::now();
-	TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::milliseconds>(NOW - BEGIN_TIME).count() / 1000.f;
-
-	std::cout << "Found " << retrieved.size() << " objects in: " << TIME_IT_TOOK << "s" << std::endl;
-	std::cout << "- - - - -" << std::endl;
-
-
-
-	// Remove those nodes
-	//BEGIN_TIME = std::chrono::steady_clock::now();
-	for (int node : retrieved) {
-		//my_quadtree.
-		my_quadtree.remove(node);
+		auto NOW = std::chrono::steady_clock::now();
+		auto TIME_IT_TOOK = std::chrono::duration_cast<std::chrono::milliseconds>(NOW - BEGIN_TIME).count() / 1000.f;
+		//std::cout << "Took " << TIME_IT_TOOK << "s (trial " << i << ")" << std::endl;
 	}
 
-	my_quadtree.render();
+	std::cout << "Retrieved cumulative: " << retrieved.size() << "\n";
+
+	//my_quadtree.render();
 
 	return 0;
 }

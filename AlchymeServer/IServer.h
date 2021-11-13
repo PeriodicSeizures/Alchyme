@@ -20,7 +20,7 @@ class IServer {
 	// Whether server is open
 	std::atomic_bool m_alive = false;
 
-	double m_timeSinceStart;
+	double m_timeSinceStart = 0;
 
 public:
 	IServer(unsigned short port);

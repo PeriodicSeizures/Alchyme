@@ -21,7 +21,7 @@
     <ClCompile Include="Packet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Socket.cpp">
+    <ClCompile Include="AsioSocket.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NetPeer.cpp">
