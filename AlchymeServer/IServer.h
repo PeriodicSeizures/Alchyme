@@ -27,16 +27,16 @@ public:
 	virtual ~IServer();
 
 	/*
-	* Start(): a blocking call to begin the server and start
+	* StartListening(): a blocking call to begin the server and start
 	* accepting incoming connections and listening
 	*/
-	void Start();
+	void StartListening();
 
 	/*
-	* Stop(): Will stop and block until io thread is killed
+	* Disconnect(): Will stop and block until io thread is killed
 	* Will automatically restart for later reuse
 	*/
-	void Stop();
+	void Disconnect();
 
 	/*
 	* IsAlive(): whether the server is open and

@@ -29,20 +29,21 @@ public:
 	/*
 	* start(): blocks the current thread and invocates RPC functions
 	*/
-	void Start();
+	//void StartListening();
 
 	/*
 	* stop(): disconnect and cleanup
 	*/
-	void Stop();
+	void Disconnect();
 
 	/*
 	* connect(...): async connect to a server
 	*/
 	void Connect(std::string host, std::string port);
 
+	void Update();
+
 private:
-	virtual void Update(float dt) = 0;
 	virtual void ConnectCallback(Rpc* rpc, ConnResult result) = 0;
 	virtual void DisconnectCallback(Rpc* rpc) = 0;
 };

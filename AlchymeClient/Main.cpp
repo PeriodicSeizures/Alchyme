@@ -15,7 +15,7 @@ int main() {
     client.Connect(host, port);
 
     try {
-        client.Start();
+        client.StartListening();
     }
     catch (const std::exception& e) {
         std::cout << "error: " << e.what() << "\n";

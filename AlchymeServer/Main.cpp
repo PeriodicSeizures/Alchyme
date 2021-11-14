@@ -54,7 +54,7 @@ int main() {
     server = std::make_unique<Server>(std::move(settings));
 
     //try {
-        server->Start();
+        server->StartListening();
     //}
     //catch (std::exception& e) {
     //    std::cout << "fatal error: " << e.what() << "\n";

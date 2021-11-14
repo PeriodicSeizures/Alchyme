@@ -8,10 +8,10 @@ IServer::IServer(unsigned short port)
 
 IServer::~IServer() {
 	LOG_DEBUG("IServer::~IServer()\n");
-	Stop();
+	Disconnect();
 }
 
-void IServer::Start() {
+void IServer::StartListening() {
 
 	LOG_DEBUG("Starting server\n");
 
@@ -47,7 +47,7 @@ void IServer::Start() {
 	}
 }
 
-void IServer::Stop() {
+void IServer::Disconnect() {
 	m_alive = false;
 	m_ctx.stop();
 
