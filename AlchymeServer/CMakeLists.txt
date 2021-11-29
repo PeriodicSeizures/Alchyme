@@ -29,11 +29,11 @@ target_compile_features(AlchymeServer PRIVATE cxx_std_20)
 #    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/AlchymeServer
 #)
 
-#set_target_properties(AlchymeServer PROPERTIES
-#    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/AlchymeServer/cwd/
-#    CXX_EXTENSIONS OFF
-#    CXX_STANDARD_REQUIRED ON
-#)
+set_target_properties(AlchymeServer PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/AlchymeServer/
+    CXX_EXTENSIONS OFF
+    CXX_STANDARD_REQUIRED ON
+)
 
 set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT AlchymeServer)
 
