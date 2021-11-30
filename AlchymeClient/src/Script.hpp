@@ -3,13 +3,15 @@
 
 #include <sol/sol.hpp>
 
-namespace ScriptInterface {
+namespace ScriptManager {
 	void Init();
-
 	lua_State* GetLuaState();
-
 	void UnInit();
 
+	namespace Event {
+		/// Event calls
+		void OnHandshake();
+	}
 };
 
 #endif

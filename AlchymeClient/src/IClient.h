@@ -22,7 +22,7 @@ class IClient {
 
 	std::atomic_bool m_alive = false;
 
-	double m_timeSinceStart = 0;
+	AsyncDeque<std::function<void()>> m_eventQueue;
 
 public:
 	IClient();
@@ -43,7 +43,11 @@ public:
 	*/
 	void Connect(std::string host, std::string port);
 
-	virtual void Update();
+	virtual void Update(float delta);
+
+	Rpc* GetRpc();
+
+	void pushEvent(std::function<void()> event);
 
 private:
 	virtual void ConnectCallback(Rpc* rpc, ConnResult result) = 0;

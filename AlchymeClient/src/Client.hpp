@@ -26,7 +26,8 @@ class Client : public IClient {
 	
 
 	/// Client connection stuff
-	std::thread m_thrPassword;
+	//std::thread m_thrPassword;
+	bool serverAwaitingPeerInfo;
 	const std::string m_version = "1.0.0";
 	NetPeer m_peer;
 
@@ -38,7 +39,7 @@ class Client : public IClient {
 	void InitRML();
 
 
-	void PasswordCallback(Rpc* rpc);
+	//void PasswordCallback(Rpc* rpc);
 
 	void RPC_ClientHandshake(Rpc* rpc);
 	void RPC_PeerInfo(Rpc* rpc, size_t peerUid, size_t worldSeed, size_t worldTime);
@@ -56,12 +57,14 @@ class Client : public IClient {
 	void DisconnectCallback(Rpc* rpc) override;
 
 public:
+	void ForwardPeerInfo(std::string username, std::string password);
+
 	bool m_running = true;
 
 	Client();
 	~Client();
 
-	void Update() override;
+	void Update(float delta) override;
 };
 
 #endif

@@ -13,23 +13,7 @@
     width: 45%;
     height: 8%;
     position: fixed;
-    margin: 0% auto auto;
-}
-
-#username-in {
-    display: inline-block;
-    width: 45%;
-    height: 8%;
-    position: fixed;
     margin: 10% auto auto;
-}
-
-#login-key-in {
-    display: inline-block;
-    width: 45%;
-    height: 8%;
-    position: fixed;
-    margin: 20% auto auto;
 }
 
 #connect {
@@ -37,5 +21,5 @@
     width: 45%;
     height: 8%;
     position: fixed;
-    margin: 30% auto auto;
+    margin: 20% auto auto;
 }

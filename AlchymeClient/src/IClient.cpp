@@ -7,6 +7,14 @@ IClient::~IClient() {
 	Disconnect();
 }
 
+Rpc* IClient::GetRpc() {
+	return m_rpc.get();
+}
+
+void IClient::pushEvent(std::function<void()> event) {
+	m_eventQueue.push_back(std::move(event));
+}
+
 void IClient::Connect(std::string host, std::string port) {
 	if (m_alive)
 		return;
@@ -24,9 +32,9 @@ void IClient::Connect(std::string host, std::string port) {
 		[this](const asio::error_code& ec, asio::ip::tcp::resolver::results_type::iterator it) {
 		if (!ec) {
 			//std::cout << "Successfully connected\n";
-
 			m_rpc->m_socket->Accept();
-			ConnectCallback(m_rpc.get(), ConnResult::OK);
+			pushEvent([this] {
+				ConnectCallback(m_rpc.get(), ConnResult::OK); });
 		}
 		else {
 			ConnResult res;
@@ -40,18 +48,28 @@ void IClient::Connect(std::string host, std::string port) {
 			else if (ec == asio::error::not_found) {
 				res = ConnResult::NOT_FOUND;
 			}
-			else {
+			else if (ec.value() == 10061) {
+				res = ConnResult::NOT_FOUND;
+			} else {
 				res = ConnResult::OTHER;
 				std::cout << __LINE__ << " " << __FILE__ << " other asio error\n";
 				std::cout << "error: " << ec.value() << " " << ec.message() << "\n";
 			}
-			ConnectCallback(nullptr, res);
+
+			pushEvent([this, res] {
+				ConnectCallback(nullptr, res);
+			});
+
+			//ConnectCallback(nullptr, res);
 		}
 	}
 	);
 
 	m_alive = true;
-	m_ctxThread = std::thread([this]() {m_ctx.run(); });
+
+	//m_ctx.run();
+
+	m_ctxThread = std::thread([this]() { m_ctx.run(); });
 }
 
 void IClient::Disconnect() {
@@ -69,8 +87,13 @@ void IClient::Disconnect() {
 	m_ctx.restart();
 }
 
-void IClient::Update() {
+void IClient::Update(float delta) {
 	OPTICK_EVENT();
+
+	while (!m_eventQueue.empty()) {
+		m_eventQueue.pop_front()();
+	}
+
 	if (m_rpc)
 		if (m_rpc->m_socket->WasDisconnected()) {
 			DisconnectCallback(m_rpc.get());

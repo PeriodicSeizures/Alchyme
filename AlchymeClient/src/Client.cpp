@@ -14,11 +14,11 @@ Client::Client() {
 	InitSDL();
 	InitGLEW();
 	InitRML();
-	ScriptInterface::Init();
+	ScriptManager::Init();
 }
 
 Client::~Client() {
-	ScriptInterface::UnInit();
+	ScriptManager::UnInit();
 
 	Rml::Shutdown();
 
@@ -107,16 +107,22 @@ void Client::InitRML() {
 
 }
 
-
-
-void Client::PasswordCallback(Rpc* rpc) {
-	std::cout << "Login key: ";
-	std::string key;
-	std::cin >> key;
-
-	// then send
-	rpc->Invoke("PeerInfo", m_version, m_peer.name, key);
+void Client::ForwardPeerInfo(std::string username, std::string password) {
+	if (serverAwaitingPeerInfo) {
+		m_peer.name = username;
+		GetRpc()->Invoke("PeerInfo", m_version, m_peer.name, password);
+		serverAwaitingPeerInfo = false;
+	}
 }
+
+//void Client::PasswordCallback(Rpc* rpc) {
+//	std::cout << "Login key: ";
+//	std::string key;
+//	std::cin >> key;
+//
+//	// then send
+//	rpc->Invoke("PeerInfo", m_version, m_peer.name, key);
+//}
 
 /*
 *
@@ -127,7 +133,9 @@ void Client::PasswordCallback(Rpc* rpc) {
 void Client::RPC_ClientHandshake(Rpc* rpc) {
 	LOG_INFO("ClientHandshake()!");
 
-	m_thrPassword = std::thread(&Client::PasswordCallback, this, rpc);
+	serverAwaitingPeerInfo = true;
+
+	ScriptManager::Event::OnHandshake();
 }
 
 void Client::RPC_PeerInfo(Rpc* rpc,
@@ -138,8 +146,6 @@ void Client::RPC_PeerInfo(Rpc* rpc,
 	LOG_INFO("my uid: " << peerUid <<
 		", worldSeed: " << worldSeed <<
 		", worldTime: " << worldTime);
-
-
 }
 
 void Client::RPC_Print(Rpc* rpc, std::string s) {
@@ -167,6 +173,7 @@ void Client::ConnectCallback(Rpc* rpc, ConnResult res) {
 	}
 	else {
 		std::cout << "Failed to connect\n";
+		Disconnect();
 	}
 }
 
@@ -174,12 +181,12 @@ void Client::DisconnectCallback(Rpc* rpc) {
 	//std::cout << ""
 }
 
-void Client::Update() {
+void Client::Update(float delta) {
 
 	OPTICK_EVENT();
 
 	// Update substructure
-	IClient::Update();
+	IClient::Update(delta);
 
 	SDL_Event event;
 
