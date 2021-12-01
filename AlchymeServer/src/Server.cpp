@@ -83,11 +83,11 @@ void Server::ConnectCallback(Rpc* rpc) {
 	rpc->Register("Print", new Method(this, &Server::RPC_Print));
 	rpc->Register("PeerInfo", new Method(this, &Server::RPC_PeerInfo));
 
-	LOG_INFO(rpc->m_socket->GetHostName() << " has connected");
+	LOG(INFO) << rpc->m_socket->GetHostName() << " has connected";
 }
 
 void Server::DisconnectCallback(Rpc* rpc) {
-	LOG_INFO(rpc->m_socket->GetHostName() << " has disconnected");
+	LOG(INFO) << rpc->m_socket->GetHostName() << " has disconnected";
 	GetPeer(rpc)->m_rpc = nullptr; // Invalidate it because the object has been freed
 }
 

@@ -9,7 +9,7 @@ Client::Client() {
 	//w.GenerateHeader("MyWorld", m_version);
 	//w.Save();
 
-	m_peer.name = "crazicrafter1";
+	//m_peer.name = "crazicrafter1";
 	//evk.run();
 	InitSDL();
 	InitGLEW();
@@ -86,7 +86,6 @@ void Client::InitRML() {
 	m_renderInterface = std::make_unique<MyRenderInterface>(m_sdlRenderer, m_sdlWindow);
 	m_systemInterface = std::make_unique<MySystemInterface>();
 	m_fileInterface = std::make_unique<MyFileInterface>("./data/");
-	//FileInterface FileInterface("C:/Users/Rico/Documents/VisualStudio2019/Projects/RMLCMake/cwd/");
 
 	Rml::SetRenderInterface(m_renderInterface.get());
 	Rml::SetSystemInterface(m_systemInterface.get());
@@ -115,15 +114,6 @@ void Client::ForwardPeerInfo(std::string username, std::string password) {
 	}
 }
 
-//void Client::PasswordCallback(Rpc* rpc) {
-//	std::cout << "Login key: ";
-//	std::string key;
-//	std::cin >> key;
-//
-//	// then send
-//	rpc->Invoke("PeerInfo", m_version, m_peer.name, key);
-//}
-
 /*
 *
 *	RPC DECLARATIONS
@@ -131,7 +121,7 @@ void Client::ForwardPeerInfo(std::string username, std::string password) {
 */
 
 void Client::RPC_ClientHandshake(Rpc* rpc) {
-	LOG_INFO("ClientHandshake()!");
+	LOG(DEBUG) << "ClientHandshake()!";
 
 	serverAwaitingPeerInfo = true;
 
@@ -143,17 +133,17 @@ void Client::RPC_PeerInfo(Rpc* rpc,
 	size_t worldSeed,
 	size_t worldTime) {
 
-	LOG_INFO("my uid: " << peerUid <<
+	LOG(DEBUG) << "my uid: " << peerUid <<
 		", worldSeed: " << worldSeed <<
-		", worldTime: " << worldTime);
+		", worldTime: " << worldTime;
 }
 
 void Client::RPC_Print(Rpc* rpc, std::string s) {
-	std::cout << "Remote print: " << s << "\n";
+	LOG(INFO) << "Remote print: " << s << "\n";
 }
 
 void Client::RPC_Error(Rpc* rpc, std::string s) {
-	std::cout << "Remote error: " << s << "\n";
+	LOG(ERROR) << "Remote error: " << s << "\n";
 }
 
 /*
@@ -172,7 +162,7 @@ void Client::ConnectCallback(Rpc* rpc, ConnResult res) {
 		rpc->Invoke("ServerHandshake");
 	}
 	else {
-		std::cout << "Failed to connect\n";
+		LOG(INFO) << "Failed to connect\n";
 		Disconnect();
 	}
 }
@@ -187,6 +177,8 @@ void Client::Update(float delta) {
 
 	// Update substructure
 	IClient::Update(delta);
+
+	ScriptManager::Event::OnUpdate(delta);
 
 	SDL_Event event;
 

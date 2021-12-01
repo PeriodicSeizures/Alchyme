@@ -11,6 +11,7 @@ namespace ScriptManager {
 	namespace Event {
 		/// Event calls
 		void OnHandshake();
+		void OnUpdate(float delta);
 	}
 };
 

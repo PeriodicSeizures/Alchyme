@@ -32,7 +32,7 @@ namespace ScriptManager {
 		}
 
 		void ConnectToServer(std::string address) {
-			std::cout << "Attempt to connect to server: " << address << "\n";
+			LOG(INFO) << "Attempt to connect to server: " << address << "\n";
 
 			auto at = address.find(':');
 			std::string port = "8001";
@@ -44,9 +44,17 @@ namespace ScriptManager {
 			GetClient()->Connect(address, port);
 		}
 
+		void DisconnectFromServer() {
+			GetClient()->Disconnect();
+		}
+
 		void ForwardPeerInfo(std::string username, std::string password) {
 			GetClient()->ForwardPeerInfo(username, password);
 		}
+
+
+
+		//std::string GetHostName()
 
 	}
 
@@ -55,16 +63,16 @@ namespace ScriptManager {
 		if (Rml::GetFileInterface()->LoadFile("scripts/entry.lua", scriptCode)) {
 
 			// State
-			scripts.clear();
 			lua = sol::state();
 			lua.open_libraries();
 
 			Rml::Lua::Initialise(lua.lua_state());
 
-			auto apiTable = lua["Alchyme"].get_or_create<sol::table>(); // lua.create_table_with(420);
+			auto apiTable = lua["Alchyme"].get_or_create<sol::table>();
 
 			apiTable["RegisterScript"] = ScriptManager::Api::RegisterScript;
 			apiTable["ConnectToServer"] = ScriptManager::Api::ConnectToServer;
+			apiTable["DisconnectFromServer"] = ScriptManager::Api::DisconnectFromServer;
 			apiTable["ForwardPeerInfo"] = ScriptManager::Api::ForwardPeerInfo;
 
 
@@ -88,13 +96,17 @@ namespace ScriptManager {
 		/// Event forward calls
 		void OnHandshake() {
 			for (auto& script : scripts) {
-				script.onHandshake();
+				if (script.onHandshake) // check is mandatory to avoid std::bad_function_call
+										// if function is empty
+					
+					script.onHandshake();
 			}
 		}
 
 		void OnUpdate(float delta) {
 			for (auto& script : scripts) {
-				script.onUpdate(delta);
+				if (script.onUpdate)
+					script.onUpdate(delta);				
 			}
 		}
 	}

@@ -27,6 +27,7 @@
  */
 #include <RmlUi/Core.h>
 #include "MySystemInterface.h"
+#include "Utils.h"
 #include <iostream>
 
 Rml::Input::KeyIdentifier MySystemInterface::TranslateKey(SDL_Keycode sdlkey)
@@ -410,33 +411,28 @@ double MySystemInterface::GetElapsedTime()
 
 bool MySystemInterface::LogMessage(Rml::Log::Type type, const Rml::String& message)
 {
-    Rml::String Type;
-
-    switch (type)
-    {
-    case Rml::Log::LT_ALWAYS:
-        Type = "[Always]";
+    switch (type) {
+    case Rml::Log::Type::LT_ALWAYS:
+        LOG(ERROR) << message;
         break;
-    case Rml::Log::LT_ERROR:
-        Type = "[Error]";
+    case Rml::Log::Type::LT_ERROR:
+        LOG(ERROR) << message;
         break;
-    case Rml::Log::LT_ASSERT:
-        Type = "[Assert]";
+    case Rml::Log::Type::LT_ASSERT:
+        LOG(ERROR) << message;
         break;
-    case Rml::Log::LT_WARNING:
-        Type = "[Warning]";
+    case Rml::Log::Type::LT_WARNING:
+        LOG(WARNING) << message;
         break;
-    case Rml::Log::LT_INFO:
-        Type = "[Info]";
+    case Rml::Log::Type::LT_INFO:
+        LOG(INFO) << message;
         break;
-    case Rml::Log::LT_DEBUG:
-        Type = "[Debug]";
+    case Rml::Log::Type::LT_DEBUG:
+        LOG(DEBUG) << message;
         break;
-    case Rml::Log::LT_MAX:
+    case Rml::Log::Type::LT_MAX:
+        LOG(DEBUG) << message;
         break;
-    };
-
-    printf("%s - %s\n", Type.c_str(), message.c_str());
-
+    }
     return true;
 }

@@ -10,6 +10,7 @@ add_library(AlchymeCore ${src} ${mf})
 target_link_libraries(AlchymeCore
     Threads::Threads
     asio
+    easyloggingpp
 )
 
 target_compile_features(AlchymeCore PRIVATE cxx_std_20)

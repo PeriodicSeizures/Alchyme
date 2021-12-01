@@ -4,17 +4,17 @@
 IServer::IServer(unsigned short port, unsigned short authPort)
 	: m_acceptor(m_ctx, tcp::endpoint(tcp::v4(), port)),
 	m_authAcceptor(m_ctx, tcp::endpoint(tcp::v4(), authPort)){
-	std::cout << "Server port set to " << port << "\n";
+	LOG(DEBUG) << "Server port set to " << port;
 }
 
 IServer::~IServer() {
-	LOG_DEBUG("IServer::~IServer()\n");
+	LOG(DEBUG) << "IServer::~IServer()";
 	Disconnect();
 }
 
 void IServer::StartListening() {
 
-	LOG_DEBUG("Starting server\n");
+	LOG(DEBUG) << "Starting server";
 
 	//std::cout << "Starting server on host " <<
 	//	m_acceptor.local_endpoint().address().to_string() << "\n";
@@ -22,7 +22,9 @@ void IServer::StartListening() {
 	DoAccept();
 
 	m_alive = true;
-	m_ctxThread = std::thread([this]() { m_ctx.run(); });
+	m_ctxThread = std::thread([this]() { 
+		el::Helpers::setThreadName("networker");
+		m_ctx.run(); });
 
 	auto last_tick = std::chrono::steady_clock::now();
 	while (m_alive) {
@@ -94,7 +96,7 @@ void IServer::DoAccept() {
 				m_rpcs.push_back(std::move(rpc));
 			}
 			else {
-				std::cerr << "error: " << ec.message() << "\n";
+				LOG(DEBUG) << "error: " << ec.message();
 			}
 
 			DoAccept();
@@ -125,7 +127,7 @@ void IServer::DoAuthAccept() {
 			m_rpcs.push_back(std::move(rpc));
 		}
 		else {
-			std::cerr << "error: " << ec.message() << "\n";
+			LOG(DEBUG) << "error: " << ec.message();
 		}
 
 		DoAccept();

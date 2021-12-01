@@ -5,7 +5,7 @@ Rpc::Rpc(std::shared_ptr<AsioSocket> socket)
 	: m_socket(socket) {}
 
 Rpc::~Rpc() {
-	LOG_DEBUG("Rpc::~Rpc()\n");
+	LOG(DEBUG) << "Rpc::~Rpc()\n";
 }
 
 void Rpc::Register(const char* name, IMethod *method) {

@@ -12,6 +12,7 @@ function mainScript.onEnable()
 	print("Main script successfully enabled!")
 		
 	rmlui:LoadFontFace("fonts/OpenSans-Regular.ttf")
+	rmlui:LoadFontFace("fonts/Norse.otf")
 	
 	local con = rmlui.contexts["default"]
 	

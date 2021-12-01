@@ -46,7 +46,7 @@ asio::ip::tcp::socket& AsioSocket::GetSocket() {
 }
 
 AsioSocket::~AsioSocket() {
-	LOG_DEBUG("~AsioSocket()");
+	LOG(DEBUG) << "~AsioSocket()";
 }
 
 bool AsioSocket::IsConnected() {
@@ -61,7 +61,7 @@ void AsioSocket::Send(Packet packet) {
 	const bool was_empty = m_sendQueue.empty();
 	m_sendQueue.push_back(std::move(packet));
 	if (was_empty) {
-		LOG_DEBUG("Reinitiating Writer");
+		LOG(DEBUG) << "Reinitiating Writer";
 		WriteHeader();
 	}
 }
@@ -80,7 +80,7 @@ bool AsioSocket::GotNewData() {
 
 void AsioSocket::Close() {
 	if (m_connected) {
-		LOG_DEBUG("AsioSocket::Close()");
+		LOG(DEBUG) << "AsioSocket::Close()";
 		m_wasDisconnected = true;
 		m_connected = false;
 
@@ -133,7 +133,7 @@ void AsioSocket::ReadHeader() {
 					// accurate and equal interval it is since
 					// the last ping timer
 					if (diff > 2s && diff <= PING_INTERVAL) {
-						LOG_DEBUG("possible pong spam: ");
+						LOG(DEBUG) << "possible pong spam: ";
 						Close();
 						break;
 					}
@@ -144,7 +144,7 @@ void AsioSocket::ReadHeader() {
 					m_pingTimer.expires_after(PING_INTERVAL);
 					m_pingTimer.async_wait(std::bind(&AsioSocket::CheckPing, this));
 
-					LOG_DEBUG("Ping: " << m_ping.load());
+					LOG(DEBUG) << "Ping: " << m_ping.load();
 
 					ReadHeader();
 					break;
@@ -152,7 +152,7 @@ void AsioSocket::ReadHeader() {
 				}
 			}
 			else {
-				LOG_DEBUG("read header error: " << e.message() << " (" << e.value() << ")");
+				LOG(DEBUG) << "read header error: " << e.message() << " (" << e.value() << ")";
 
 				Close();
 			}
@@ -174,11 +174,11 @@ void AsioSocket::ReadBody() {
 				if (!e) {
 					m_recvQueue.push_back({ 0, m_inPacket.m_buf });
 
-					LOG_DEBUG("read_body()");
+					LOG(DEBUG) << "read_body()";
 					ReadHeader();
 				}
 				else {
-					LOG_DEBUG("read body error: " << e.message() << " (" << e.value() << ")");
+					LOG(DEBUG) << "read body error: " << e.message() << " (" << e.value() << ")";
 					//std::cerr << "read body error: " << e.message().c_str() << "\n";
 					Close();
 				}
@@ -195,7 +195,7 @@ void AsioSocket::WriteHeader() {
 		m_last_ping = std::chrono::steady_clock::now();
 	}
 
-	LOG_DEBUG("write_header()");
+	LOG(DEBUG) << "write_header()";
 
 	auto self(shared_from_this());
 	asio::async_write(m_socket,
@@ -203,7 +203,7 @@ void AsioSocket::WriteHeader() {
 
 		[this, self](const std::error_code& e, size_t) {
 			if (!e) {
-				LOG_DEBUG("Wrote header");
+				LOG(DEBUG) << "Wrote header";
 				auto front = m_sendQueue.front();
 				if (!front.m_buf.empty()) {
 					WriteBody(std::move(front));
@@ -215,9 +215,8 @@ void AsioSocket::WriteHeader() {
 					}
 				}
 			}
-			else {
-				
-				LOG_DEBUG("write header error: " << e.message() << " (" << e.value() << ")");
+			else {				
+				LOG(DEBUG) << "write header error: " << e.message() << " (" << e.value() << ")";
 				//std::cerr << "write header error: " << e.message().c_str() << "\n";
 				Close();
 			}
@@ -227,14 +226,14 @@ void AsioSocket::WriteHeader() {
 
 void AsioSocket::WriteBody(Packet front) {
 
-	LOG_DEBUG("write_body()");
+	LOG(DEBUG) << "write_body()";
 
 	auto self(shared_from_this());
 	asio::async_write(m_socket,
 		asio::buffer(front.m_buf.data(), front.offset),
 		[this, self](const std::error_code& e, size_t) {
 		if (!e) {
-			LOG_DEBUG("Wrote body\n");
+			LOG(DEBUG) << "Wrote body\n";
 
 			m_sendQueue.pop_front();
 			if (!m_sendQueue.empty()) {
@@ -242,7 +241,7 @@ void AsioSocket::WriteBody(Packet front) {
 			}
 		}
 		else {
-			LOG_DEBUG("write body error: " << e.message() << " (" << e.value() << ")");
+			LOG(DEBUG) << "write body error: " << e.message() << " (" << e.value() << ")";
 			//std::cerr << "write body error: " << e.message().c_str() << "\n";
 			Close();
 		}
@@ -259,7 +258,7 @@ void AsioSocket::CheckPong() {
 	// deadline before this actor had a chance to run.
 	if (m_pongTimer.expiry() <= asio::steady_timer::clock_type::now())
 	{
-		LOG_DEBUG("Pong not received in time");
+		LOG(DEBUG) << "Pong not received in time";
 
 		// The deadline has passed. The socket is closed so that any outstanding
 		// asynchronous operations are cancelled.

@@ -52,8 +52,8 @@ void IClient::Connect(std::string host, std::string port) {
 				res = ConnResult::NOT_FOUND;
 			} else {
 				res = ConnResult::OTHER;
-				std::cout << __LINE__ << " " << __FILE__ << " other asio error\n";
-				std::cout << "error: " << ec.value() << " " << ec.message() << "\n";
+				LOG(INFO) << __LINE__ << " " << __FILE__ << " other asio error";
+				LOG(INFO) << "error: " << ec.value() << " " << ec.message();
 			}
 
 			pushEvent([this, res] {
@@ -69,7 +69,9 @@ void IClient::Connect(std::string host, std::string port) {
 
 	//m_ctx.run();
 
-	m_ctxThread = std::thread([this]() { m_ctx.run(); });
+	m_ctxThread = std::thread([this]() { 
+		el::Helpers::setThreadName("networker");
+		m_ctx.run(); });
 }
 
 void IClient::Disconnect() {
