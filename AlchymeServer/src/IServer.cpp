@@ -31,6 +31,12 @@ void IServer::StartListening() {
 		auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
 		last_tick = now; // std::chrono::steady_clock::now();
 
+		while (!m_taskQueue.empty()) {
+			const auto now = std::chrono::steady_clock::now();
+			if (m_taskQueue.front().at < now)
+				m_taskQueue.pop_front().function();
+		}
+
 		for (auto&& it = m_rpcs.begin(); it != m_rpcs.end();) {
 			if ((*it)->m_socket->WasDisconnected()) {
 				DisconnectCallback(it->get());
@@ -59,6 +65,15 @@ void IServer::Disconnect() {
 
 bool IServer::IsAlive() {
 	return m_alive;
+}
+
+void IServer::RunTask(std::function<void()> event) {
+	const auto now = std::chrono::steady_clock::now();
+	m_taskQueue.push_back({ now, std::move(event) });
+}
+
+void IServer::RunTaskLater(std::function<void()> event, std::chrono::steady_clock::time_point at) {
+	m_taskQueue.push_back({ at, std::move(event) });
 }
 
 void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends

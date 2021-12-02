@@ -9,6 +9,11 @@
 using namespace asio::ip;
 
 class IServer {
+	struct Task {
+		std::chrono::steady_clock::time_point at;
+		std::function<void()> function;
+	};
+
 	// Could also store as a map<string ip, Rpc>
 	std::vector<std::unique_ptr<Rpc>> m_rpcs;
 
@@ -19,6 +24,8 @@ class IServer {
 	
 	// Whether server is open
 	std::atomic_bool m_alive = false;
+
+	AsyncDeque<Task> m_taskQueue;
 
 public:
 	IServer(unsigned short port);
@@ -46,6 +53,10 @@ public:
 	* Disconnect(...): sever a connection
 	*/
 	void Disconnect(Rpc *rpc); // , bool doCloseAfterSends = false
+
+	void RunTask(std::function<void()> event);
+	void RunTaskLater(std::function<void()> event, std::chrono::steady_clock::time_point at);
+
 
 private:
 	/*
