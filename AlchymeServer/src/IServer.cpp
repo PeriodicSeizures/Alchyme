@@ -1,32 +1,28 @@
 #include "IServer.h"
 #include "Utils.h"
 
-IServer::IServer(unsigned short port)
-	: m_acceptor(m_ctx, tcp::endpoint(tcp::v4(), port)) {
-	LOG(DEBUG) << "Server port set to " << port;
+IServer::IServer() {
+	//LOG(DEBUG) << "Server port set to " << port;
 }
 
 IServer::~IServer() {
 	LOG(DEBUG) << "IServer::~IServer()";
-	Disconnect();
+	Stop();
 }
 
-void IServer::StartListening() {
+void IServer::Run() {
 
 	LOG(DEBUG) << "Starting server";
 
 	//std::cout << "Starting server on host " <<
 	//	m_acceptor.local_endpoint().address().to_string() << "\n";
 
-	DoAccept();
+	//DoAccept();
 
-	m_alive = true;
-	m_ctxThread = std::thread([this]() { 
-		el::Helpers::setThreadName("networker");
-		m_ctx.run(); });
+	m_running = true;
 
 	auto last_tick = std::chrono::steady_clock::now();
-	while (m_alive) {
+	while (m_running) {
 		auto now = std::chrono::steady_clock::now();
 		auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
 		last_tick = now; // std::chrono::steady_clock::now();
@@ -53,18 +49,27 @@ void IServer::StartListening() {
 	}
 }
 
-void IServer::Disconnect() {
-	m_alive = false;
+void IServer::StartAccepting(uint_least16_t port) {
+	m_acceptor = std::make_unique<tcp::acceptor>(m_ctx, tcp::endpoint(tcp::v4(), port));
+
+	LOG(DEBUG) << "Starting server on *:" << port;
+
+	DoAccept();
+
+	m_ctxThread = std::thread([this]() {
+		el::Helpers::setThreadName("networker");
+		m_ctx.run();
+	});
+}
+
+void IServer::Stop() {
+	m_running = false;
 	m_ctx.stop();
 
 	if (m_ctxThread.joinable())
 		m_ctxThread.join();
 
 	m_ctx.restart();
-}
-
-bool IServer::IsAlive() {
-	return m_alive;
 }
 
 void IServer::RunTask(std::function<void()> event) {
@@ -85,7 +90,7 @@ void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends
 }
 
 void IServer::DoAccept() {
-	m_acceptor.async_accept(
+	m_acceptor->async_accept(
 		[this](const asio::error_code& ec, tcp::socket socket) {
 			if (!ec) {
 				auto rpc = std::make_unique<Rpc>(

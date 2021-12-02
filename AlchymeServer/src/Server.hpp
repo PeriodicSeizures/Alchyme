@@ -68,13 +68,16 @@ class Server : public IServer {
 
 	bool InternalIsBanned(const std::string& key);
 
-	//Result SQLCheckBan(const std::string& key);
+
 
 	void CheckBans();
 	void DisconnectLater(Rpc* rpc, std::chrono::milliseconds ms);
 
 public:
-	Server(std::unordered_map<std::string, std::string> settings);
+	Server();
 
 	~Server();
+
+	void Run() override;
+	void Stop() override;
 };

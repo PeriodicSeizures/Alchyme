@@ -20,39 +20,33 @@ class IServer {
 	// Asio stuff
 	std::thread m_ctxThread; // run ctx async
 	asio::io_context m_ctx;
-	tcp::acceptor m_acceptor;
+	std::unique_ptr<tcp::acceptor> m_acceptor;
 	
 	// Whether server is open
-	std::atomic_bool m_alive = false;
+	bool m_running = true;
 
 	AsyncDeque<Task> m_taskQueue;
 
 public:
-	IServer(unsigned short port);
+	IServer();
 	virtual ~IServer();
 
 	/*
 	* StartListening(): a blocking call to begin the server and start
 	* accepting incoming connections and listening
 	*/
-	void StartListening();
+	virtual void Run();
 
 	/*
 	* Disconnect(): Will stop and block until io thread is killed
 	* Will automatically restart for later reuse
 	*/
-	void Disconnect();
-
-	/*
-	* IsAlive(): whether the server is open and
-	* accepting connections
-	*/
-	bool IsAlive();
+	virtual void Stop();
 
 	/*
 	* Disconnect(...): sever a connection
 	*/
-	void Disconnect(Rpc *rpc); // , bool doCloseAfterSends = false
+	void Disconnect(Rpc *rpc);
 
 	void RunTask(std::function<void()> event);
 	void RunTaskLater(std::function<void()> event, std::chrono::steady_clock::time_point at);
@@ -68,6 +62,9 @@ private:
 
 	// Run acceptor
 	void DoAccept();
+
+protected:
+	void StartAccepting(uint_least16_t port);
 };
 
 #endif

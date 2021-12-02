@@ -60,9 +60,9 @@ int main() {
         std::cerr << "settings file not found\n";
         return 0;
     }
-	Server s(std::move(settings));
+	Server s;
 
-	s.StartListening();
+	s.Run();
 
 	return 0;
 }

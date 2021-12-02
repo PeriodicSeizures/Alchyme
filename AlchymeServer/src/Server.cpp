@@ -3,19 +3,49 @@
 
 using namespace std::chrono_literals;
 
-Server::Server(std::unordered_map<std::string, std::string> settings) : IServer(
-	std::stoi(settings["port"])), settings(settings) {
+#define SETTING(key, def) (settings.emplace(key, def).first->second)
 
+static bool loadSettings(std::unordered_map<std::string, std::string>& settings) {
+	std::ifstream file;
 
-	//world = std::make_unique<World>()
+	file.open("C:\\Users\\Rico\\Documents\\VisualStudio2019\\Projects\\Alchyme\\AlchymeServer\\data\\settings.txt");
+	if (file.is_open()) {
+		std::string line;
+		while (std::getline(file, line)) {
+			size_t index = line.find(':');
+
+			std::string key = line.substr(0, index);
+			std::string value = line.substr(index + 2);
+			settings.insert({ key, value });
+		}
+
+		file.close();
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
+Server::Server() {
+
 }
 
 Server::~Server() {
-	//SaveBanList();
+}
 
-	//std::ofstream myfile;
-	//myfile.open("at_exit_was_called.txt", std::ios::out);
-	//myfile.close();
+void Server::Run() {
+	// Load all stuff here
+
+	loadSettings(settings);
+
+	StartAccepting(std::stoi(settings["port"]));
+
+	IServer::Run();
+}
+
+void Server::Stop() {
+	IServer::Stop();
 }
 
 void Server::RPC_ServerHandshake(Rpc* rpc) {
