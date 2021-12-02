@@ -39,7 +39,7 @@ void Server::Run() {
 
 	loadSettings(settings);
 
-	StartAccepting(std::stoi(settings["port"]));
+	StartAccepting(std::stoi(SETTING("port", "8001")));
 
 	IServer::Run();
 }
