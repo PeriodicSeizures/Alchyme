@@ -1,9 +1,8 @@
 #include "IServer.h"
 #include "Utils.h"
 
-IServer::IServer(unsigned short port, unsigned short authPort)
-	: m_acceptor(m_ctx, tcp::endpoint(tcp::v4(), port)),
-	m_authAcceptor(m_ctx, tcp::endpoint(tcp::v4(), authPort)){
+IServer::IServer(unsigned short port)
+	: m_acceptor(m_ctx, tcp::endpoint(tcp::v4(), port)) {
 	LOG(DEBUG) << "Server port set to " << port;
 }
 
@@ -44,8 +43,6 @@ void IServer::StartListening() {
 		}
 		Update(dt / 1000000.f);
 
-		m_timeSinceStart += dt / 1000000.f;
-
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
@@ -72,10 +69,6 @@ void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends
 		rpc->m_socket->Close();
 }
 
-double IServer::getTimeSinceStart() {
-	return m_timeSinceStart;
-}
-
 void IServer::DoAccept() {
 	m_acceptor.async_accept(
 		[this](const asio::error_code& ec, tcp::socket socket) {
@@ -89,10 +82,6 @@ void IServer::DoAccept() {
 
 				ConnectCallback(rpc.get());
 
-				// register and invoke RPCS at this point
-				//rpc.Invoke("print", 69420);
-				//rpc.Invoke("noargs");
-
 				m_rpcs.push_back(std::move(rpc));
 			}
 			else {
@@ -101,36 +90,5 @@ void IServer::DoAccept() {
 
 			DoAccept();
 		});
-
-}
-
-void IServer::DoAuthAccept() {
-	m_authAcceptor.async_accept(
-		[this](const asio::error_code& ec, tcp::socket socket) {
-		if (!ec) {
-
-			//m_auths
-
-			auto rpc = std::make_unique<Rpc>(
-				std::make_shared<AsioSocket>(m_ctx, std::move(socket)));
-
-			//std::cout << rpc->m_socket->GetHostName() << " has connected\n";
-
-			rpc->m_socket->Accept();
-
-			ConnectCallback(rpc.get());
-
-			// register and invoke RPCS at this point
-			//rpc.Invoke("print", 69420);
-			//rpc.Invoke("noargs");
-
-			m_rpcs.push_back(std::move(rpc));
-		}
-		else {
-			LOG(DEBUG) << "error: " << ec.message();
-		}
-
-		DoAccept();
-	});
 
 }

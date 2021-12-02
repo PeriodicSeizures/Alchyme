@@ -4,7 +4,7 @@
 using namespace std::chrono_literals;
 
 Server::Server(std::unordered_map<std::string, std::string> settings) : IServer(
-	std::stoi(settings["port"]), 8004), settings(settings) {
+	std::stoi(settings["port"])), settings(settings) {
 
 
 	//world = std::make_unique<World>()

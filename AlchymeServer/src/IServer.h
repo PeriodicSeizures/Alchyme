@@ -11,22 +11,17 @@ using namespace asio::ip;
 class IServer {
 	// Could also store as a map<string ip, Rpc>
 	std::vector<std::unique_ptr<Rpc>> m_rpcs;
-	std::vector<std::shared_ptr<tcp::socket>> m_auths;
 
 	// Asio stuff
 	std::thread m_ctxThread; // run ctx async
 	asio::io_context m_ctx;
 	tcp::acceptor m_acceptor;
 	
-	tcp::acceptor m_authAcceptor;
-
 	// Whether server is open
 	std::atomic_bool m_alive = false;
 
-	double m_timeSinceStart = 0;
-
 public:
-	IServer(unsigned short port, unsigned short authPort);
+	IServer(unsigned short port);
 	virtual ~IServer();
 
 	/*
@@ -52,8 +47,6 @@ public:
 	*/
 	void Disconnect(Rpc *rpc); // , bool doCloseAfterSends = false
 
-	double getTimeSinceStart();
-
 private:
 	/*
 	 * To override
@@ -64,7 +57,6 @@ private:
 
 	// Run acceptor
 	void DoAccept();
-	void DoAuthAccept();
 };
 
 #endif
