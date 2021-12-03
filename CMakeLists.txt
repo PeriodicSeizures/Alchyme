@@ -66,6 +66,24 @@ endif()
 
 
 
+
+#include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+#conan_basic_setup(TARGETS)
+#
+#target_link_libraries(${PROJECT_NAME} CONAN_PKG::robin-hood-hashing)
+
+CPMAddPackage(
+    NAME robinhood
+    GITHUB_REPOSITORY martinus/robin-hood-hashing
+    #VERSION 3.11.3
+    GIT_TAG 3.11.3
+    DOWNLOAD_ONLY TRUE
+)
+add_library(robinhood INTERFACE)
+target_include_directories(robinhood SYSTEM INTERFACE ${robinhood_SOURCE_DIR}/src/include)
+
+
+
 find_package(OpenGL REQUIRED)
 
 

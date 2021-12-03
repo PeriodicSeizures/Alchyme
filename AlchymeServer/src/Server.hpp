@@ -1,11 +1,11 @@
 #pragma once
-#include <unordered_set>
 #include <fstream>
 //#include <sqlite3.h>
 #include <chrono>
 #include <memory>
 #include "IServer.h"
 #include "NetPeer.h"
+#include <robin_hood.h>
 
 class World;
 
@@ -22,12 +22,12 @@ class Server : public IServer {
 	//robin_hood::unordered_set<std::unique_ptr<Rpc>> m_rb_rpcs;
 	//sqlite3* DB;
 
-	std::unordered_map<std::string, std::string> settings;
+	robin_hood::unordered_map<std::string, std::string> settings;
 	bool m_useWhitelist;
 
 	// Contains login keys which are banned
-	std::unordered_set<std::string> m_whitelist;
-	std::unordered_set<std::string> m_bannedIps;
+	robin_hood::unordered_set<std::string> m_whitelist;
+	robin_hood::unordered_set<std::string> m_bannedIps;
 		
 	std::unique_ptr<World> world;
 
