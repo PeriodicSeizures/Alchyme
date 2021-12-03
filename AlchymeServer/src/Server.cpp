@@ -9,6 +9,7 @@ static bool loadSettings(std::unordered_map<std::string, std::string>& settings)
 	std::ifstream file;
 
 	file.open("C:\\Users\\Rico\\Documents\\VisualStudio2019\\Projects\\Alchyme\\AlchymeServer\\data\\settings.txt");
+	//file.open("data\\settings.txt");
 	if (file.is_open()) {
 		std::string line;
 		while (std::getline(file, line)) {
@@ -27,17 +28,18 @@ static bool loadSettings(std::unordered_map<std::string, std::string>& settings)
 	}
 }
 
-Server::Server() {
-
-}
-
-Server::~Server() {
-}
+Server::Server() {}
+Server::~Server() {}
 
 void Server::Run() {
 	// Load all stuff here
 
-	loadSettings(settings);
+	if (!loadSettings(settings))
+		throw std::runtime_error("could not load settings.txt");
+
+	m_useWhitelist = SETTING("use-whitelist", "true") == "true";
+
+	LoadUsers();
 
 	StartAccepting(std::stoi(SETTING("port", "8001")));
 
@@ -48,30 +50,14 @@ void Server::Stop() {
 	IServer::Stop();
 }
 
-void Server::RPC_ServerHandshake(Rpc* rpc) {
-	std::cout << "ServerHandshake()!\n";
+void Server::Update(float dt) {
+	using namespace std::chrono_literals;
 
-	rpc->Invoke("ClientHandshake");
 }
 
-void Server::RPC_PeerInfo(Rpc* rpc,
-	std::string version,
-	std::string name,
-	std::string key) {
-	// assert version, name, hash
-	if (version != m_version) {
-
-		std::cout << "wrong version\n";
-
-		rpc->Invoke("Error", std::string("wrong version; need: ") + this->m_version);
-
-		// schedule a disconnect
-		DisconnectLater(rpc, 2ms * rpc->m_socket->GetPing() + 40ms);
-		return;
-	}
-
-	if (InternalIsBanned(key)) {
-		rpc->Invoke("Error", std::string("blacklisted"));
+void Server::ConnectCallback(Rpc* rpc) {
+	if (isIpBanned(rpc->m_socket->GetHostName())) {
+		rpc->Invoke("Error", std::string("ip banned"));
 		rpc->UnregisterAll();
 
 		// schedule a disconnect
@@ -79,36 +65,8 @@ void Server::RPC_PeerInfo(Rpc* rpc,
 		return;
 	}
 
-	auto peer = this->GetPeer(rpc);
-
-	peer->m_uid = StrHash(name.c_str());
-	peer->m_key = key;
-	peer->name = name;
-	peer->authorized = true;
-
-	rpc->Invoke("PeerInfo",
-		peer->m_uid, StrHash("my world"), size_t(0));
-}
-
-void Server::RPC_Print(Rpc* rpc, std::string s) {
-	std::cout << "Remote print: " << s << "\n";
-}
-
-void Server::Update(float dt) {
-	using namespace std::chrono_literals;
-	auto now = std::chrono::steady_clock::now();
-
-	auto delta = now - m_lastBanCheck;
-	if (delta > 5s) {
-		CheckBans();
-		m_lastBanCheck = std::chrono::steady_clock::now();
-	}
-
-	//std::cout << getTimeSinceStart() << "\n";
-}
-
-void Server::ConnectCallback(Rpc* rpc) {
 	m_peers.push_back(std::make_unique<NetPeer>(rpc));
+
 	rpc->Register("ServerHandshake", new Method(this, &Server::RPC_ServerHandshake));
 	rpc->Register("Print", new Method(this, &Server::RPC_Print));
 	rpc->Register("PeerInfo", new Method(this, &Server::RPC_PeerInfo));
@@ -118,7 +76,7 @@ void Server::ConnectCallback(Rpc* rpc) {
 
 void Server::DisconnectCallback(Rpc* rpc) {
 	LOG(INFO) << rpc->m_socket->GetHostName() << " has disconnected";
-	GetPeer(rpc)->m_rpc = nullptr; // Invalidate it because the object has been freed
+	GetPeer(rpc)->m_rpc = nullptr; // Invalidate
 }
 
 NetPeer* Server::GetPeer(size_t uid) {
@@ -145,143 +103,75 @@ NetPeer* Server::GetPeer(Rpc* rpc) {
 	return nullptr;
 }
 
-/*
-*
-*			Ban section
-*
-*/
-
-void Server::GlobalBan(const std::string& key) {
-	m_banned.insert(key);
-	std::string sql = "UPDATE users SET banned = 1 WHERE key == '" + key + "';COMMIT;";
-	//sqlite3_exec(DB, sql.c_str(), NULL, NULL, NULL);
+void Server::addIpBan(const std::string& host) {
+	m_bannedIps.insert(host);
 }
 
-void Server::GlobalUnBan(const std::string& key) {
-	m_banned.erase(key);
-	std::string sql = "UPDATE users SET banned = 0 WHERE key == '" + key + "';COMMIT;";
-	//sqlite3_exec(DB, sql.c_str(), NULL, NULL, NULL);
+void Server::addToWhitelist(const std::string& key) {
+	m_whitelist.insert(key);
 }
 
-bool Server::InternalIsBanned(const std::string& key) {
-	return m_banned.contains(key);
-}
-/*
-Result Server::SQLCheckBan(const std::string& key) {
-
-	std::string sql = "SELECT banned FROM users WHERE key == '" + key + "';";
-
-	sqlite3_stmt* stmt = NULL;
-	int rc = sqlite3_prepare_v2(DB, sql.c_str(), -1, &stmt, NULL);
-	if (rc != SQLITE_OK) {
-		//std::cerr << "sql error\n";
-		// schedule a disconnect
-		return Result::SQL_ERROR;
-	}
-	else {
-		rc = sqlite3_step(stmt);
-		int row = 0;
-		Result result = Result::ALLOWED;
-		while (rc != SQLITE_DONE && rc != SQLITE_OK) {
-			row++;
-			char* banned = (char*)sqlite3_column_text(stmt, 0);
-
-			//std::cout << "Banned: " << banned << "\n";
-
-			if (*banned == '1') {
-				result = Result::BANNED;
-			}
-			break;
-		}
-		if (row == 0) {
-			result = Result::INVALID_KEY;
-		}
-
-		sqlite3_finalize(stmt);
-		return result;
-	}
-}
-*/
-
-void Server::CheckBans() {
-	for (auto&& peer : m_peers) {
-
-		if (peer->m_rpc && peer->authorized) {
-			using namespace std::chrono_literals;
-			//std::string sql = "SELECT"
-			/*
-			switch (SQLCheckBan(peer->m_key)) {
-			case Result::SQL_ERROR:
-				std::cerr << "sql error while checking bans\n";
-				break;
-			case Result::BANNED:
-				peer->m_rpc->Invoke("Error", std::string("blacklisted"));
-				m_banned.insert(peer->m_key);
-				// schedule a disconnect
-				DisconnectLater(peer->m_rpc, 2ms * peer->m_rpc->m_socket->GetPing() + 40ms);
-				break;
-			case Result::INVALID_KEY:
-				std::cerr << "user has an invalid key\n";
-				DisconnectLater(peer->m_rpc, 2ms * peer->m_rpc->m_socket->GetPing() + 40ms);
-				break;
-			case Result::ALLOWED:
-				m_banned.erase(peer->m_key);
-				break;
-			}
-			*/
-		}
-	}
+void Server::removeIpBan(const std::string& host) {
+	m_bannedIps.erase(host);
 }
 
-//void SaveBanList() {
-//	std::ofstream myfile;
-//	myfile.open("banned_ips.txt", std::ios::out);
-//	if (myfile.is_open()) {
-//		for (auto&& s : m_bannedIps) {
-//			myfile << s << "\n";
-//		}
-//		myfile.close();
-//	}
-//
-//	myfile.open("banned_names.txt", std::ios::out);
-//	if (myfile.is_open()) {
-//		for (auto&& s : m_bannedNames) {
-//			myfile << s << "\n";
-//		}
-//		myfile.close();
-//	}
-//}
+void Server::removeFromWhitelist(const std::string& key) {
+	m_whitelist.erase(key);
+}
 
-//void LoadBanList() {
-//	std::ifstream myfile;
-//	myfile.open("banned_ips.txt", std::ios::in);
-//	if (myfile.is_open()) {
-//		std::string line;
-//		while (std::getline(myfile, line)) {
-//			m_bannedIps.insert(line);
-//		}
-//		myfile.close();
-//	}
-//
-//	myfile.open("banned_names.txt", std::ios::in);
-//	if (myfile.is_open()) {
-//		std::string line;
-//		while (std::getline(myfile, line)) {
-//			m_bannedNames.insert(line);
-//		}
-//		myfile.close();
-//	}
-//}
+bool Server::isIpBanned(const std::string& host) {
+	return m_bannedIps.contains(host);
+}
 
-/*
-*
-* end of ban section
-*
-*/
+bool Server::isWhitelisted(const std::string& key) {
+	return m_whitelist.contains(key);
+}
 
 void Server::DisconnectLater(Rpc* rpc, std::chrono::milliseconds ms) {
-	asio::post([this, rpc, ms]() {
+	const auto now = std::chrono::steady_clock::now();
+
+	RunTaskLater([this, rpc, ms]() {
 		std::this_thread::sleep_for(ms);
 		Disconnect(rpc);
-	});
+	}, now + ms);
+}
+
+void Server::SaveUsers() {
+	std::ofstream myfile;
+	myfile.open("data\\banned_ips.txt", std::ios::out);
+	if (myfile.is_open()) {
+		for (auto&& s : m_bannedIps) {
+			myfile << s << std::endl;
+		}
+		myfile.close();
+	}
+
+	myfile.open("data\\whitelist.txt", std::ios::out);
+	if (myfile.is_open()) {
+		for (auto&& s : m_whitelist) {
+			myfile << s << std::endl;
+		}
+		myfile.close();
+	}
+}
+
+void Server::LoadUsers() {
+	std::ifstream myfile;
+	myfile.open("data\\banned_ips.txt", std::ios::in);
+	if (myfile.is_open()) {
+		std::string line;
+		while (std::getline(myfile, line)) {
+			m_bannedIps.insert(line);
+		}
+		myfile.close();
+	}
+
+	myfile.open("data\\whitelist.txt", std::ios::in);
+	if (myfile.is_open()) {
+		std::string line;
+		while (std::getline(myfile, line)) {
+			m_whitelist.insert(line);
+		}
+		myfile.close();
+	}
 }

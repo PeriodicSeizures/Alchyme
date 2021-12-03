@@ -15,14 +15,19 @@ enum class ConnResult {
 };
 
 class IClient {
+	struct Task {
+		std::chrono::steady_clock::time_point at;
+		std::function<void()> function;
+	};
+
 	std::thread m_ctxThread;
 	asio::io_context m_ctx;
 
 	std::unique_ptr<Rpc> m_rpc;
 
-	std::atomic_bool m_alive = false;
+	bool m_running = false;
 
-	AsyncDeque<std::function<void()>> m_eventQueue;
+	AsyncDeque<Task> m_taskQueue;
 
 public:
 	IClient();
@@ -31,7 +36,9 @@ public:
 	/*
 	* start(): blocks the current thread and invocates RPC functions
 	*/
-	//void StartListening();
+	virtual void Run();
+
+	virtual void Stop();
 
 	/*
 	* stop(): disconnect and cleanup
@@ -43,13 +50,13 @@ public:
 	*/
 	void Connect(std::string host, std::string port);
 
-	virtual void Update(float delta);
-
 	Rpc* GetRpc();
 
-	void pushEvent(std::function<void()> event);
+	void RunTask(std::function<void()> event);
+	void RunTaskLater(std::function<void()> event, std::chrono::steady_clock::time_point at);
 
 private:
+	virtual void Update(float delta) = 0;
 	virtual void ConnectCallback(Rpc* rpc, ConnResult result) = 0;
 	virtual void DisconnectCallback(Rpc* rpc) = 0;
 };

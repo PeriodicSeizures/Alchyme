@@ -22,6 +22,7 @@ void initLogger() {
     loggerConfiguration.set(el::Level::Fatal, el::ConfigurationType::Format, format);
     loggerConfiguration.set(el::Level::Warning, el::ConfigurationType::Format, format);
     loggerConfiguration.set(el::Level::Debug, el::ConfigurationType::Format, format);
+
     el::Helpers::setThreadName("main");
     el::Loggers::reconfigureAllLoggers(loggerConfiguration);
     el::Loggers::addFlag(el::LoggingFlag::ColoredTerminalOutput);
@@ -33,7 +34,13 @@ int main() {
     initLogger();
 
 	Server s;
-	s.Run();
+
+    try {
+        s.Run();
+    }
+    catch (std::exception& e) {
+        LOG(ERROR) << e.what();
+    }
 
 	return 0;
 }

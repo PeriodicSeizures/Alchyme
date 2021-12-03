@@ -7,9 +7,12 @@
 #include "MySystemInterface.h"
 #include "MyFileInterface.h"
 
+enum class GameState {
+	MainMenu,
+	Playing
+};
+
 class Client : public IClient {
-
-
 
 	/// Client initialization stuff
 	SDL_Window* m_sdlWindow;
@@ -51,20 +54,18 @@ class Client : public IClient {
 	* server implemtation
 	* 
 	*/
-
+	void Update(float delta) override;
 	void ConnectCallback(Rpc* rpc, ConnResult res) override;
-
 	void DisconnectCallback(Rpc* rpc) override;
 
 public:
 	void ForwardPeerInfo(std::string username, std::string password);
 
-	bool m_running = true;
-
 	Client();
 	~Client();
 
-	void Update(float delta) override;
+	static Client* GetClient();
+	static void RunClient();
 };
 
 #endif

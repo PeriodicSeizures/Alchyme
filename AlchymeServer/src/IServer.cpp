@@ -12,13 +12,6 @@ IServer::~IServer() {
 
 void IServer::Run() {
 
-	LOG(DEBUG) << "Starting server";
-
-	//std::cout << "Starting server on host " <<
-	//	m_acceptor.local_endpoint().address().to_string() << "\n";
-
-	//DoAccept();
-
 	m_running = true;
 
 	auto last_tick = std::chrono::steady_clock::now();
@@ -52,7 +45,7 @@ void IServer::Run() {
 void IServer::StartAccepting(uint_least16_t port) {
 	m_acceptor = std::make_unique<tcp::acceptor>(m_ctx, tcp::endpoint(tcp::v4(), port));
 
-	LOG(DEBUG) << "Starting server on *:" << port;
+	LOG(INFO) << "Starting server on *:" << port;
 
 	DoAccept();
 
@@ -82,11 +75,7 @@ void IServer::RunTaskLater(std::function<void()> event, std::chrono::steady_cloc
 }
 
 void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends
-	//if (doCloseAfterSends)
-	//	rpc->m_socket->CloseAfterNextSends();
-	//else
-	//if (rpc && rpc->m_socket)
-		rpc->m_socket->Close();
+	rpc->m_socket->Close();
 }
 
 void IServer::DoAccept() {
@@ -105,7 +94,7 @@ void IServer::DoAccept() {
 				m_rpcs.push_back(std::move(rpc));
 			}
 			else {
-				LOG(DEBUG) << "error: " << ec.message();
+				LOG(ERROR) << ec.message();
 			}
 
 			DoAccept();

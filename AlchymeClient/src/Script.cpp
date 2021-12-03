@@ -4,7 +4,6 @@
 #include <sol/sol.hpp>
 #include <filesystem>
 #include "Client.hpp"
-#include "Game.h"
 
 struct Script {
 	const std::function<void()> onEnable;
@@ -41,15 +40,15 @@ namespace ScriptManager {
 				address = address.substr(0, at);
 			}
 
-			GetClient()->Connect(address, port);
+			Client::GetClient()->Connect(address, port);
 		}
 
 		void DisconnectFromServer() {
-			GetClient()->Disconnect();
+			Client::GetClient()->Disconnect();
 		}
 
 		void ForwardPeerInfo(std::string username, std::string password) {
-			GetClient()->ForwardPeerInfo(username, password);
+			Client::GetClient()->ForwardPeerInfo(username, password);
 		}
 
 

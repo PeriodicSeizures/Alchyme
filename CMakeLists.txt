@@ -111,6 +111,9 @@ CPMAddPackage(
 
 
 
+#IF(NOT(CMAKE_BUILD_TYPE MATCHES DEBUG))
+    add_compile_definitions(ELPP_DISABLE_DEBUG_LOGS)
+#ENDIF()
 CPMAddPackage(
     NAME easyloggingpp
     GITHUB_REPOSITORY amrayn/easyloggingpp

@@ -2,7 +2,19 @@
 #include "Script.hpp"
 #include <RmlUi/Core.h>
 #include <RmlUi/Debugger.h>
-#include "Game.h"
+#include <optick.h>
+
+std::unique_ptr<Client> client;
+
+Client* Client::GetClient() {
+	return client.get();
+}
+
+void Client::RunClient() {
+	client = std::make_unique<Client>();
+	client->Run();
+	client.reset();
+}
 
 Client::Client() {
 	//World w("myworld");
@@ -116,38 +128,6 @@ void Client::ForwardPeerInfo(std::string username, std::string password) {
 
 /*
 *
-*	RPC DECLARATIONS
-*
-*/
-
-void Client::RPC_ClientHandshake(Rpc* rpc) {
-	LOG(DEBUG) << "ClientHandshake()!";
-
-	serverAwaitingPeerInfo = true;
-
-	ScriptManager::Event::OnHandshake();
-}
-
-void Client::RPC_PeerInfo(Rpc* rpc,
-	size_t peerUid,
-	size_t worldSeed,
-	size_t worldTime) {
-
-	LOG(DEBUG) << "my uid: " << peerUid <<
-		", worldSeed: " << worldSeed <<
-		", worldTime: " << worldTime;
-}
-
-void Client::RPC_Print(Rpc* rpc, std::string s) {
-	LOG(INFO) << "Remote print: " << s << "\n";
-}
-
-void Client::RPC_Error(Rpc* rpc, std::string s) {
-	LOG(ERROR) << "Remote error: " << s << "\n";
-}
-
-/*
-*
 * server implementation
 *
 */
@@ -168,7 +148,7 @@ void Client::ConnectCallback(Rpc* rpc, ConnResult res) {
 }
 
 void Client::DisconnectCallback(Rpc* rpc) {
-	//std::cout << ""
+	LOG(INFO) << "Disconnected from server";
 }
 
 void Client::Update(float delta) {
@@ -176,7 +156,6 @@ void Client::Update(float delta) {
 	OPTICK_EVENT();
 
 	// Update substructure
-	IClient::Update(delta);
 
 	ScriptManager::Event::OnUpdate(delta);
 
@@ -193,7 +172,7 @@ void Client::Update(float delta) {
 		switch (event.type)
 		{
 		case SDL_QUIT:
-			m_running = false;
+			Stop();
 			break;
 
 		case SDL_MOUSEMOTION:

@@ -1,4 +1,4 @@
-﻿#include "Game.h"
+﻿#include "Client.hpp"
 #include <easylogging++.h>
 
 INITIALIZE_EASYLOGGINGPP
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
 {
     initLogger();
 
-	RunMainGame();
+    Client::RunClient();
 	
 	return 0;
 }
