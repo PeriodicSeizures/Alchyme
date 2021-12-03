@@ -6,6 +6,18 @@ using namespace std::chrono_literals;
 #define SETTING(key, def) (settings.emplace(key, def).first->second)
 
 static bool loadSettings(std::unordered_map<std::string, std::string>& settings) {
+std::unique_ptr<Server> server;
+
+Server* Server::GetServer() {
+	return server.get();
+}
+
+void Server::RunServer() {
+	server = std::make_unique<Server>();
+	server->Run();
+	server.reset();
+}
+
 	std::ifstream file;
 
 	file.open("C:\\Users\\Rico\\Documents\\VisualStudio2019\\Projects\\Alchyme\\AlchymeServer\\data\\settings.txt");
@@ -29,6 +41,7 @@ static bool loadSettings(std::unordered_map<std::string, std::string>& settings)
 }
 
 Server::Server() {}
+
 Server::~Server() {}
 
 void Server::Run() {

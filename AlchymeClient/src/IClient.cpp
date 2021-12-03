@@ -4,6 +4,7 @@
 IClient::IClient() {}
 
 IClient::~IClient() {
+	LOG(DEBUG) << "~IClient()";
 	Stop();
 }
 
@@ -21,10 +22,7 @@ void IClient::RunTaskLater(std::function<void()> event, std::chrono::steady_cloc
 }
 
 void IClient::Run() {
-	//auto last_tick = std::chrono::steady_clock::now();
-
 	m_running = true;
-
 	while (m_running) {
 		OPTICK_FRAME("MainThread");
 

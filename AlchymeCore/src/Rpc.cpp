@@ -5,11 +5,18 @@ Rpc::Rpc(std::shared_ptr<AsioSocket> socket)
 	: m_socket(socket) {}
 
 Rpc::~Rpc() {
-	LOG(DEBUG) << "Rpc::~Rpc()\n";
+	LOG(DEBUG) << "~Rpc()";
+	UnregisterAll();
 }
 
 void Rpc::Register(const char* name, IMethod *method) {
 	size_t hash = StrHash(name);
+
+	#ifndef _NDEBUG
+		if (m_methods.find(hash) != m_methods.end())
+			throw std::runtime_error("Hash collision, this is extremely rare");
+	#endif
+
 	m_methods.insert({ hash, method });
 }
 
@@ -21,8 +28,6 @@ void Rpc::UnregisterAll() {
 }
 
 void Rpc::Update() {
-	/// iterate packets and execute
-	//std::cout << "Rpc::Update()\n";
 	int max = 3;
 	while (m_socket->GotNewData() && max-- >= 0) {
 		Packet packet = m_socket->Recv();
@@ -32,13 +37,11 @@ void Rpc::Update() {
 		// find method in stored
 		auto&& find = m_methods.find(hash);
 		if (find != m_methods.end()) {
-			//try {
-				find->second->Invoke(this, std::move(packet));
-			//}
-			//catch (std::exception& e) {
-				//std::cerr << "Remote did not pass the right arguments to function\n";
-			//	LOG_ERROR("error: " << e.what());
-			//}
+			find->second->Invoke(this, packet);
+			
+			if (packet.offset != packet.m_buf.size())
+				throw std::runtime_error("Remote failed to use correct number of args");
+				
 		}
 		else {
 			throw std::runtime_error("Remote tried invoking unknown function");

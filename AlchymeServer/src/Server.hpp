@@ -19,6 +19,7 @@ enum class Result {
 class Server : public IServer {
 
 	std::vector<std::unique_ptr<NetPeer>> m_peers;
+	//robin_hood::unordered_set<std::unique_ptr<Rpc>> m_rb_rpcs;
 	//sqlite3* DB;
 
 	std::unordered_map<std::string, std::string> settings;
@@ -52,6 +53,9 @@ public:
 
 	bool isIpBanned(const std::string &host);
 	bool isWhitelisted(const std::string &key);
+
+	static Server* GetServer();
+	static void RunServer();
 
 private:
 	void RPC_ServerHandshake(Rpc* rpc);

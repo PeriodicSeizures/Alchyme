@@ -23,7 +23,7 @@ class IServer {
 	std::unique_ptr<tcp::acceptor> m_acceptor;
 	
 	// Whether server is open
-	bool m_running = true;
+	bool m_running = false;
 
 	AsyncDeque<Task> m_taskQueue;
 

@@ -1,24 +1,20 @@
 #include "IServer.h"
 #include "Utils.h"
 
-IServer::IServer() {
-	//LOG(DEBUG) << "Server port set to " << port;
-}
+IServer::IServer() {}
 
 IServer::~IServer() {
-	LOG(DEBUG) << "IServer::~IServer()";
+	LOG(DEBUG) << "~IServer()";
 	Stop();
 }
 
 void IServer::Run() {
-
 	m_running = true;
-
-	auto last_tick = std::chrono::steady_clock::now();
 	while (m_running) {
 		auto now = std::chrono::steady_clock::now();
+		static auto last_tick = now;
 		auto dt = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
-		last_tick = now; // std::chrono::steady_clock::now();
+		last_tick = now;
 
 		while (!m_taskQueue.empty()) {
 			const auto now = std::chrono::steady_clock::now();
@@ -36,6 +32,7 @@ void IServer::Run() {
 				++it;
 			}
 		}
+		// UPDATE
 		Update(dt / 1000000.f);
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -74,7 +71,7 @@ void IServer::RunTaskLater(std::function<void()> event, std::chrono::steady_cloc
 	m_taskQueue.push_back({ at, std::move(event) });
 }
 
-void IServer::Disconnect(Rpc* rpc) { // , bool doCloseAfterSends
+void IServer::Disconnect(Rpc* rpc) {
 	rpc->m_socket->Close();
 }
 

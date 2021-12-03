@@ -14,6 +14,7 @@ target_link_libraries(AlchymeClient
 	AlchymeCore
     Threads::Threads
     asio
+    robinhood
     OpenGL::GL
     glm
     stb
