@@ -17,9 +17,12 @@ void Client::RunClient() {
 }
 
 Client::Client() {
-	//World w("myworld");
-	//w.GenerateHeader("MyWorld", m_version);
-	//w.Save();
+	World w("myworld.bin");
+	w.LoadHeaderSection(m_version, "MyWorld");
+	w.Save();
+
+	World w2("myworld.bin");
+	w2.LoadHeaderSection(m_version, "MyWorld");
 
 	//m_peer.name = "crazicrafter1";
 	//evk.run();

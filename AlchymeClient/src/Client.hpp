@@ -34,15 +34,10 @@ class Client : public IClient {
 	const std::string m_version = "1.0.0";
 	NetPeer m_peer;
 
-
-
 	/// Initializer methods
 	void InitSDL();
 	void InitGLEW();
 	void InitRML();
-
-
-	//void PasswordCallback(Rpc* rpc);
 
 	void RPC_ClientHandshake(Rpc* rpc);
 	void RPC_PeerInfo(Rpc* rpc, size_t peerUid, size_t worldSeed, size_t worldTime);
@@ -51,7 +46,7 @@ class Client : public IClient {
 
 	/*
 	* 
-	* server implemtation
+	* server implementation
 	* 
 	*/
 	void Update(float delta) override;

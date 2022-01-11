@@ -1,14 +1,14 @@
 #ifndef RPC_H
 #define RPC_H
 
-#include <unordered_map>
+#include <robin_hood.h>
 #include "Method.h"
 #include "Socket.h"
 
 #include "Utils.h"
 
 class Rpc {
-	std::unordered_map<size_t, IMethod*> m_methods;
+	robin_hood::unordered_map<size_t, IMethod*> m_methods;
 
 public:
 	std::shared_ptr<AsioSocket> m_socket;
@@ -27,7 +27,6 @@ public:
 
 	template <typename T, typename... Types>
 	void Append_impl(Packet& p, T var1, Types... var2) {
-
 		p.Write(var1);
 
 		Append_impl(p, var2...);

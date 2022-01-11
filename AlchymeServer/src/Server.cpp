@@ -64,8 +64,7 @@ void Server::Stop() {
 }
 
 void Server::Update(float dt) {
-	using namespace std::chrono_literals;
-
+	
 }
 
 void Server::ConnectCallback(Rpc* rpc) {

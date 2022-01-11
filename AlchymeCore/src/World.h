@@ -2,14 +2,31 @@
 #define WORLD_H
 
 #include <string>
+#include <chrono>
+#include <fstream>
+#include "Chunk.h"
+#include <robin_hood.h>
+
+class Entity;
 
 class World
 {
 	std::string m_filename;
-	std::string m_worldname;
-	
-	size_t m_seed;
+
+	std::ifstream m_inFile;
+
+	// keep track of last loading time for playtime accumulation
+	std::chrono::steady_clock::time_point m_timeSinceLoad;
+
+	// File members to save/load
 	std::string m_version;
+	std::string m_worldname;
+	long long m_seed;
+	long long m_timeCreated; // in seconds
+	long long m_lastPlayed; // in seconds
+	long long m_timePlayed; // in seconds
+	robin_hood::unordered_map<size_t, Entity*> m_entities;
+
 
 	// split world into chunks
 
@@ -27,13 +44,14 @@ class World
 public:
 	World(std::string name);
 
-	void GenerateHeader(std::string worldname,
-		std::string version, 
-		size_t seed = 0);
+	//void GenerateHeader(std::string version,
+	//	std::string worldname,
+	//	long long seed = 0);
 
 	void Save();
 
-	void Load();
+	void LoadHeaderSection(std::string defVersion, std::string defWorldname, long long defSeed = 0);
+	void LoadEntitySection();
 	
 };
 

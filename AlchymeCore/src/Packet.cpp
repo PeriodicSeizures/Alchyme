@@ -1,37 +1,47 @@
 #include "Packet.h"
 
-//void Packet::WriteBytes(std::vector<char> buf) {
-//	if (m_buf.size() < offset + buf.size()) {
-//		m_buf.resize(offset + buf.size());
-//	}
-//	
-//	std::memcpy(m_buf.data() + offset, buf.data(), buf.size());
-//	offset += buf.size();
-//}
+bool Packet::Read(void* out, size_t _Size) {
+    if (offset + _Size > m_buf.size())
+        return false;
 
-void Packet::Read(std::string &out) {
-    size_t size; Read(size); 
-    
-    if (offset + size > m_buf.size())
-        throw std::range_error("Reading out of bounds");
-    
-    out.resize(size);
-    std::memcpy(out.data(), m_buf.data() + offset, size);
-    offset += size;
+    //    destination, source
+    std::memcpy(out, m_buf.data() + offset, _Size);
+
+    offset += _Size;
+
+    return true;
 }
 
-void Packet::Write(std::string &in) {
-    // should not use this, a big enough vec
-    // should be passed in during construction
+bool Packet::Read(std::string &out) {
+    size_t _Size; if (!Read(&_Size, sizeof(_Size))) return false;
 
-    size_t size = in.size();
+    if (_Size > 256)
+        return false;
 
-    Write(size);
+    out.resize(_Size);
 
-    if (m_buf.size() < offset + size) {
-        m_buf.resize(offset + size);
-    }
+    // Will never read null terminating character into string
+    // Also will never expect null terminating character to finalize string
+    return Read(out.data(), _Size);
+}
 
-    std::memcpy(m_buf.data() + offset, in.data(), size);
-    offset += size;
+bool Packet::Write(void* in, size_t _Size) {
+    if (offset + _Size > m_buf.size())
+        return false;
+
+    //    destination, source
+    std::memcpy(m_buf.data() + offset, in, _Size);
+
+    offset += _Size;
+
+    return true;
+}
+
+bool Packet::Write(std::string &in) {
+    size_t _Size = in.size(); if (!Write(&_Size, sizeof(_Size))) return false;
+
+    if (_Size > 256)
+        return false;
+
+    return Write(in.data(), _Size);
 }

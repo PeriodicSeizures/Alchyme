@@ -51,9 +51,6 @@ public:
  * 
 */
 class AsioSocket : ISocket, public std::enable_shared_from_this<AsioSocket> {
-	//asio::io_context _io_context;
-	//tcp::acceptor _acceptor;
-
 	std::string address;
 	uint_least16_t port;
 
@@ -63,17 +60,13 @@ class AsioSocket : ISocket, public std::enable_shared_from_this<AsioSocket> {
 
 	std::atomic<bool> m_connected = false;
 	std::atomic<bool> m_wasDisconnected = false;
-	//std::atomic<bool> doCloseAfterSends = false;
 
 	Packet m_inPacket;
-	//int temp_size;
 
 	asio::steady_timer m_pingTimer;
 	asio::steady_timer m_pongTimer;
 	std::atomic<int> m_ping;
 	std::chrono::steady_clock::time_point m_last_ping;
-
-	//DisconnectResult disconnectResult;
 
 public:
 	typedef std::shared_ptr<AsioSocket> ptr;
@@ -117,6 +110,8 @@ private:
 	void ReadBody();
 	void WriteHeader();
 	void WriteBody(Packet front);
+
+	void SendPing();
 };
 
 #endif

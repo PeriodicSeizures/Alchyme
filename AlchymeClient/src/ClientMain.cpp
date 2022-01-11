@@ -28,6 +28,17 @@ int main(int argc, char** argv)
     initLogger();
 
     Client::RunClient();
+
+    //World w("myworld.bin");
+    ////w.GenerateHeader("1.0.0", "my world");
+    //w.LoadHeaderSection("1.0.0", "myworld");
+    //std::this_thread::sleep_for(5s);
+    //w.Save();
+
+	/**
+    * Could write each world data section in portions
+    * 
+	*/
 	
 	return 0;
 }

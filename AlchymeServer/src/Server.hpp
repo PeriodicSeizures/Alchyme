@@ -61,6 +61,10 @@ private:
 	void RPC_ServerHandshake(Rpc* rpc);
 	void RPC_PeerInfo(Rpc* rpc, std::string version, std::string name, std::string key);
 	void RPC_Print(Rpc* rpc, std::string s);
+	void RPC_AddIpBan(Rpc* rpc, std::string host);
+	void RPC_RemoveIpBan(Rpc* rpc, std::string host);
+	void RPC_AddToWhitelist(Rpc* rpc, std::string key);
+	void RPC_RemoveFromWhitelist(Rpc* rpc, std::string key);
 
 	void Update(float dt) override;
 	void ConnectCallback(Rpc* rpc) override;

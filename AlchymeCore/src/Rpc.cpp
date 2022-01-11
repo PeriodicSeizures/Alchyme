@@ -28,7 +28,7 @@ void Rpc::UnregisterAll() {
 }
 
 void Rpc::Update() {
-	int max = 3;
+	int max = 10;
 	while (m_socket->GotNewData() && max-- >= 0) {
 		Packet packet = m_socket->Recv();
 
@@ -39,8 +39,9 @@ void Rpc::Update() {
 		if (find != m_methods.end()) {
 			find->second->Invoke(this, packet);
 			
-			if (packet.offset != packet.m_buf.size())
-				throw std::runtime_error("Remote failed to use correct number of args");
+			// this wont work, offset supposedly contains the method hash
+			//if (packet.offset != packet.m_buf.size())
+				//throw std::runtime_error("Remote failed to use correct number of args");
 				
 		}
 		else {

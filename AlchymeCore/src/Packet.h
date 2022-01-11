@@ -7,40 +7,27 @@ struct Packet {
     std::size_t offset = 0;
     std::vector<char> m_buf;
     
-    template<typename T>
-    void Read(T &out) {
-        if (offset + sizeof(T) > m_buf.size())
-            throw std::runtime_error("Reading out of bounds");
-
-        //if (m_buf.empty())
-            //return;
-
-        std::memcpy(&out, m_buf.data() + offset, sizeof(T));
-
-        offset += sizeof(T);
-    }
-
-    void Read(std::string &out);
-
-    //template<typename T>
-    //void Write(const char* in);
+    /**
+     * Readers 
+    */
+    bool Read(void* out, size_t _Size);
 
     template<typename T>
-    void Write(T &in) {
-        // should not use this, a big enough vec
-        // should be passed in during construction
-
-        //Write(&in);
-
-        if (m_buf.size() < offset + sizeof(T)) {
-            m_buf.resize(offset + sizeof(T));
-        }
-
-        std::memcpy(m_buf.data() + offset, &in, sizeof(T));        
-        offset += sizeof(T);
+    bool Read(T out) {
+        return Read(&out, sizeof(out));
     }
 
-    void Write(std::string &in);
+    bool Read(std::string &out);
 
-    //void Write(std::vector<char> buf);
+    /*
+    * Writers
+    */
+    bool Write(void* in, size_t _Size);
+
+    template<typename T>
+    bool Write(T in) {
+        return Write(&in, sizeof(in));
+    }
+
+    bool Write(std::string &in);
 };

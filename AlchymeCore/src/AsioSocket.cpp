@@ -9,8 +9,8 @@ using namespace std::chrono_literals;
 static constexpr size_t PING = MAXULONGLONG;
 static constexpr size_t PONG = PING - 1;
 
-#define PING_INTERVAL 5s
-#define PONG_TIMEOUT 10s
+#define PING_INTERVAL 10000s //5s
+#define PONG_TIMEOUT 10000s //10s
 
 AsioSocket::AsioSocket(asio::io_context& ctx,
 	asio::ip::tcp::socket socket)
@@ -25,6 +25,7 @@ AsioSocket::AsioSocket(asio::io_context& ctx)
 
 void AsioSocket::Accept() {
 	m_connected = true;
+	m_wasDisconnected = false;
 
 	address = m_socket.remote_endpoint().address().to_string();
 	port = m_socket.remote_endpoint().port();
@@ -35,9 +36,7 @@ void AsioSocket::Accept() {
 	/*
 	* Send ping
 	*/
-	Send({ PING });
-
-	m_pongTimer.expires_after(PONG_TIMEOUT);
+	SendPing();
 	m_pongTimer.async_wait(std::bind(&AsioSocket::CheckPong, this));
 }
 
@@ -46,6 +45,7 @@ asio::ip::tcp::socket& AsioSocket::GetSocket() {
 }
 
 AsioSocket::~AsioSocket() {
+	Close();
 	LOG(DEBUG) << "~AsioSocket()";
 }
 
@@ -282,8 +282,12 @@ void AsioSocket::CheckPing() {
 		return;
 
 	if (m_pingTimer.expiry() <= asio::steady_timer::clock_type::now()) {
-		Send({ PING });
-
-		m_pongTimer.expires_after(PONG_TIMEOUT);
+		SendPing();
 	}
+}
+
+void AsioSocket::SendPing() {
+	Send({ PING });
+
+	m_pongTimer.expires_after(PONG_TIMEOUT);
 }
