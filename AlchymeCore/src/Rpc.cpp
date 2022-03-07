@@ -14,7 +14,7 @@ void Rpc::Register(const char* name, IMethod *method) {
 
 	#ifndef _NDEBUG
 		if (m_methods.find(hash) != m_methods.end())
-			throw std::runtime_error("Hash collision, this is extremely rare");
+			throw std::runtime_error("Hash collision, or most likely duplicate RPC name registered");
 	#endif
 
 	m_methods.insert({ hash, method });

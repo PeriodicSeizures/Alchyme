@@ -36,8 +36,11 @@ void IClient::Run() {
 		// TASKS
 		while (!m_taskQueue.empty()) {
 			const auto now = std::chrono::steady_clock::now();
-			if (m_taskQueue.front().at < now)
-				m_taskQueue.pop_front().function();
+			if (m_taskQueue.front().at < now) {
+				auto task = m_taskQueue.front();
+				task.function();
+				m_taskQueue.pop_front();
+			}
 		}
 
 		// RPC
@@ -84,7 +87,6 @@ void IClient::Connect(std::string host, std::string port) {
 			m_rpc->m_socket->Accept();
 		}
 		else {
-			ConnResult res;
 			// 10060
 			if (ec == asio::error::timed_out) {
 				res = ConnResult::TIMEOUT;
@@ -114,7 +116,7 @@ void IClient::Connect(std::string host, std::string port) {
 	});
 
 	m_ctxThread = std::thread([this]() {
-		el::Helpers::setThreadName("networker");
+		el::Helpers::setThreadName("io");
 		m_ctx.run();
 	});
 }
