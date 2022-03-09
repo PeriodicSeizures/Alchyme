@@ -6,8 +6,8 @@
 
 using namespace std::chrono_literals;
 
-static constexpr size_t PING = MAXULONGLONG;
-static constexpr size_t PONG = PING - 1;
+static constexpr decltype(Packet::offset) PING = MAXULONGLONG;
+static constexpr decltype(Packet::offset) PONG = PING - 1;
 
 #define PING_INTERVAL 10000s //5s
 #define PONG_TIMEOUT 10000s //10s
@@ -24,8 +24,10 @@ AsioSocket::AsioSocket(asio::io_context& ctx)
 	m_pongTimer(ctx) {}
 
 void AsioSocket::Accept() {
-	m_connected = true;
-	m_wasDisconnected = false;
+	m_status = IOStatus::OPEN;
+
+	//m_connected = true;
+	//m_wasDisconnected = false;
 
 	address = m_socket.remote_endpoint().address().to_string();
 	port = m_socket.remote_endpoint().port();
@@ -40,6 +42,11 @@ void AsioSocket::Accept() {
 	m_pongTimer.async_wait(std::bind(&AsioSocket::CheckPong, this));
 }
 
+bool AsioSocket::Closed() {
+	return m_status == IOStatus::SELF_CLOSED
+		|| m_status == IOStatus::HOST_CLOSED;
+}
+
 asio::ip::tcp::socket& AsioSocket::GetSocket() {
 	return m_socket;
 }
@@ -49,12 +56,16 @@ AsioSocket::~AsioSocket() {
 	LOG(DEBUG) << "~AsioSocket()";
 }
 
-bool AsioSocket::IsConnected() {
-	return m_connected;
-}
+//bool AsioSocket::IsConnected() {
+//	return m_connected;
+//}
+//
+//bool AsioSocket::WasDisconnected() {
+//	return m_wasDisconnected;
+//}
 
-bool AsioSocket::WasDisconnected() {
-	return m_wasDisconnected;
+IOStatus AsioSocket::Status() {
+	return m_status;
 }
 
 void AsioSocket::Send(Packet packet) {
@@ -78,19 +89,21 @@ bool AsioSocket::GotNewData() {
 	return !m_recvQueue.empty();
 }
 
+void AsioSocket::HostClose() {
+	Close();
+	m_status = IOStatus::HOST_CLOSED;
+	//m_wasUserDisconnected = false;
+}
+
 void AsioSocket::Close() {
-	if (m_connected) {
+	if (m_status == IOStatus::OPEN) {
+		m_status = IOStatus::SELF_CLOSED;
 		LOG(DEBUG) << "AsioSocket::Close()";
-		m_wasDisconnected = true;
-		m_connected = false;
 
 		m_pongTimer.cancel();
 		m_pingTimer.cancel();
 
-		//asio::error_code ec;
-		m_socket.close();// ec);
-
-		//this->disconnectResult = disconnectResult;
+		m_socket.close();
 	}
 }
 
@@ -154,14 +167,13 @@ void AsioSocket::ReadHeader() {
 			else {
 				LOG(DEBUG) << "read header error: " << e.message() << " (" << e.value() << ")";
 
-				Close();
+				HostClose();
 			}
 		}
 	);
 }
 
 void AsioSocket::ReadBody() {
-	// The packet.offset will serve as the size
 	m_inPacket.m_buf.resize(m_inPacket.offset);
 
 	if (m_inPacket.m_buf.empty()) {
@@ -180,7 +192,7 @@ void AsioSocket::ReadBody() {
 				else {
 					LOG(DEBUG) << "read body error: " << e.message() << " (" << e.value() << ")";
 					//std::cerr << "read body error: " << e.message().c_str() << "\n";
-					Close();
+					HostClose();
 				}
 			}
 		);
@@ -218,7 +230,7 @@ void AsioSocket::WriteHeader() {
 			else {				
 				LOG(DEBUG) << "write header error: " << e.message() << " (" << e.value() << ")";
 				//std::cerr << "write header error: " << e.message().c_str() << "\n";
-				Close();
+				HostClose();
 			}
 		}
 	);
@@ -243,14 +255,14 @@ void AsioSocket::WriteBody(Packet front) {
 		else {
 			LOG(DEBUG) << "write body error: " << e.message() << " (" << e.value() << ")";
 			//std::cerr << "write body error: " << e.message().c_str() << "\n";
-			Close();
+			HostClose();
 		}
 	}
 	);
 }
 
 void AsioSocket::CheckPong() {
-	if (!m_connected)
+	if (m_status != IOStatus::OPEN)
 		return;
 
 	// Check whether the deadline has passed. We compare the deadline against
@@ -278,7 +290,7 @@ void AsioSocket::CheckPong() {
 }
 
 void AsioSocket::CheckPing() {
-	if (!m_connected)
+	if (m_status != IOStatus::OPEN)
 		return;
 
 	if (m_pingTimer.expiry() <= asio::steady_timer::clock_type::now()) {

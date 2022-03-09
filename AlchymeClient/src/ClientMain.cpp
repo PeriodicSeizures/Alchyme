@@ -1,4 +1,4 @@
-﻿#include "Client.hpp"
+﻿#include "AlchymeClient.h"
 #include <easylogging++.h>
 
 INITIALIZE_EASYLOGGINGPP
@@ -27,7 +27,10 @@ int main(int argc, char** argv)
 {
     initLogger();
 
-    Client::RunClient();
+    AlchymeClient c;
+    c.Start();
+
+    //AlchymeClient::Run();
 
     //World w("myworld.bin");
     ////w.GenerateHeader("1.0.0", "my world");

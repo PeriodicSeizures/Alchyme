@@ -3,7 +3,7 @@
 #include <RmlUi/Lua.h>
 #include <sol/sol.hpp>
 #include <filesystem>
-#include "Client.hpp"
+#include "AlchymeClient.h"
 
 struct Script {
 	const std::function<void()> onEnable;
@@ -40,15 +40,16 @@ namespace ScriptManager {
 				address = address.substr(0, at);
 			}
 
-			Client::GetClient()->Connect(address, port);
+			AlchymeClient::Get()->Connect(address, port);
 		}
 
 		void DisconnectFromServer() {
-			Client::GetClient()->Disconnect();
+			AlchymeClient::Get()->
+			AlchymeClient::Get()->StopIOThread();
 		}
 
 		void ForwardPeerInfo(std::string username, std::string password) {
-			Client::GetClient()->ForwardPeerInfo(username, password);
+			AlchymeClient::Get()->ForwardPeerInfo(username, password);
 		}
 
 

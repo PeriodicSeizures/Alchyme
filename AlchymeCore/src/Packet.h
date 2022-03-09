@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 struct Packet {
-    std::size_t offset = 0;
+    uint16_t offset = 0;
     std::vector<char> m_buf;
     
     /**

@@ -7,11 +7,15 @@
 
 #include "Utils.h"
 
+//#define RPC_INVOKE(func, ...) rpc->Invoke(func, ...)
+
 class Rpc {
 	robin_hood::unordered_map<size_t, IMethod*> m_methods;
 
 public:
 	std::shared_ptr<AsioSocket> m_socket;
+
+	int not_garbage = 5;
 
 public:
 	Rpc(std::shared_ptr<AsioSocket> m_socket);

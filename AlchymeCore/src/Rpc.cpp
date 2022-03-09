@@ -38,18 +38,9 @@ void Rpc::Update() {
 		auto&& find = m_methods.find(hash);
 		if (find != m_methods.end()) {
 			find->second->Invoke(this, packet);
-			
-			// this wont work, offset supposedly contains the method hash
-			//if (packet.offset != packet.m_buf.size())
-				//throw std::runtime_error("Remote failed to use correct number of args");
-				
 		}
 		else {
 			throw std::runtime_error("Remote tried invoking unknown function");
 		}
-
 	}
 }
-
-// Can register methods before socket is initialized
-// but invocation

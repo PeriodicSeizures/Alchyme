@@ -1,13 +1,12 @@
 #pragma once
 #include <fstream>
-//#include <sqlite3.h>
 #include <chrono>
 #include <memory>
-#include "IServer.h"
+
+#include "World.h"
+#include "AlchymeGame.h"
 #include "NetPeer.h"
 #include <robin_hood.h>
-
-class World;
 
 enum class Result {
 	SQL_ERROR = 0,
@@ -16,33 +15,35 @@ enum class Result {
 	ALLOWED
 };
 
-class Server : public IServer {
+class AlchymeServer : public AlchymeGame {
 
+	//std::thread m_consoleThread;
+
+	std::future<std::string> consoleFuture;
+
+	//std::vector<std::unique_ptr<Rpc>> m_rpcs;
 	std::vector<std::unique_ptr<NetPeer>> m_peers;
-	//robin_hood::unordered_set<std::unique_ptr<Rpc>> m_rb_rpcs;
-	//sqlite3* DB;
 
 	robin_hood::unordered_map<std::string, std::string> settings;
-	bool m_useWhitelist;
 
 	// Contains login keys which are banned
 	robin_hood::unordered_set<std::string> m_whitelist;
 	robin_hood::unordered_set<std::string> m_bannedIps;
-		
-	std::unique_ptr<World> world;
+	bool m_useWhitelist;
+	std::chrono::steady_clock::time_point m_lastBanCheck;
 
+	std::unique_ptr<tcp::acceptor> m_acceptor;
 
 	// use std string for runtime passing
 	const char* m_version = "1.0.0";
 
-	std::thread m_consoleIn;
-
 public:
-	Server();
+	static AlchymeServer* Get();
+	static void Run();
 
-	~Server();
+	AlchymeServer();
 
-	void Run() override;
+	void Start() override;
 	void Stop() override;
 
 	void addIpBan(const std::string& host);
@@ -54,10 +55,15 @@ public:
 	bool isIpBanned(const std::string &host);
 	bool isWhitelisted(const std::string &key);
 
-	static Server* GetServer();
-	static void RunServer();
-
 private:
+	void PreUpdate(float delta) override;
+	void Update(float delta) override;
+	void ConnectCallback(Rpc* rpc) override;
+	void DisconnectCallback(Rpc* rpc) override;
+
+	void DoAccept();
+	//void CheckUsers();
+
 	void RPC_ServerHandshake(Rpc* rpc);
 	void RPC_PeerInfo(Rpc* rpc, std::string version, std::string name, std::string key);
 	void RPC_Print(Rpc* rpc, std::string s);
@@ -65,10 +71,6 @@ private:
 	void RPC_RemoveIpBan(Rpc* rpc, std::string host);
 	void RPC_AddToWhitelist(Rpc* rpc, std::string key);
 	void RPC_RemoveFromWhitelist(Rpc* rpc, std::string key);
-
-	void Update(float dt) override;
-	void ConnectCallback(Rpc* rpc) override;
-	void DisconnectCallback(Rpc* rpc) override;
 
 	NetPeer* GetPeer(size_t uid);
 	NetPeer* GetPeer(std::string name);
@@ -78,4 +80,6 @@ private:
 
 	void SaveUsers();
 	void LoadUsers();
+
+	void Disconnect(Rpc* rpc);
 };

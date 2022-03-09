@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "AlchymeServer.hpp"
 
 //#define SETTING(key) (settings.emplace(key, def).first->second)
 #define SETTING(key, def) (settings.emplace(key, def).first->second)
@@ -25,7 +25,7 @@ static bool loadSettings(std::unordered_map<std::string, std::string>& settings)
 	}
 }
 
-void Server::Run() {
+void AlchymeServer::Start() {
 	// Load all stuff here
 	loadSettings(settings);
 
@@ -37,19 +37,19 @@ void Server::Run() {
 	IServer::Run();
 }
 
-void Server::Stop() {
+void AlchymeServer::Stop() {
 	SaveUsers();
 
-	IServer::Stop();
+	AlchymeGame::Stop();
 }
 
-void Server::RPC_ServerHandshake(Rpc* rpc) {
+void AlchymeServer::RPC_ServerHandshake(Rpc* rpc) {
 	LOG(INFO) << "ServerHandshake()!";
 
 	rpc->Invoke("ClientHandshake");
 }
 
-void Server::RPC_PeerInfo(Rpc* rpc,
+void AlchymeServer::RPC_PeerInfo(Rpc* rpc,
 	std::string version,
 	std::string name,
 	std::string key) {
@@ -83,11 +83,24 @@ void Server::RPC_PeerInfo(Rpc* rpc,
 		peer->m_uid, StrHash("my world"), size_t(0));
 }
 
-void Server::RPC_Print(Rpc* rpc, std::string s) {
+void AlchymeServer::RPC_Print(Rpc* rpc, std::string s) {
 	LOG(INFO) << "Remote print: " << s;
 }
 
-void Server::Update(float dt) {
+void AlchymeServer::PreUpdate(float dt) {
+	for (auto&& it = m_rpcs.begin(); it != m_rpcs.end();) {
+		if ((*it)->m_socket->WasDisconnected()) {
+			DisconnectCallback(it->get());
+			it = m_rpcs.erase(it);
+		}
+		else {
+			(*it)->Update();
+			++it;
+		}
+	}
+}
+
+void AlchymeServer::Update(float dt) {
 	using namespace std::chrono_literals;
 	auto now = std::chrono::steady_clock::now();
 
@@ -98,7 +111,7 @@ void Server::Update(float dt) {
 	}
 }
 
-void Server::ConnectCallback(Rpc* rpc) {
+void AlchymeServer::ConnectCallback(Rpc* rpc) {
 	m_peers.push_back(std::make_unique<NetPeer>(rpc));
 	rpc->Register("ServerHandshake", new Method(this, &Server::RPC_ServerHandshake));
 	rpc->Register("Print", new Method(this, &Server::RPC_Print));

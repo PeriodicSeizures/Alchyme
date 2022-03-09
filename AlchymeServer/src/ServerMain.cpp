@@ -4,7 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include "Server.hpp"
+#include "AlchymeServer.hpp"
 //#include "FastBuffer.hpp"
 
 INITIALIZE_EASYLOGGINGPP
@@ -31,12 +31,14 @@ void initLogger() {
 }
 
 int main() {
+    //std::this_thread::
+
     initLogger();
 
-	Server s;
+	AlchymeServer s;
 
     try {
-        s.Run();
+        s.Start();
     }
     catch (std::exception& e) {
         LOG(ERROR) << e.what();

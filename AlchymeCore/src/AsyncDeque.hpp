@@ -1,5 +1,5 @@
-#ifndef ASYNCQUEUE_H
-#define ASYNCQUEUE_H
+#ifndef ASYNCDEQUE_H
+#define ASYNCDEQUE_H
 
 #include <memory>
 #include <thread>

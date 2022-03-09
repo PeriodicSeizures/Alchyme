@@ -1,10 +1,32 @@
 #include "AlchymeGame.h"
+#include "World.h"
 
-AlchymeGame::AlchymeGame() {
+AlchymeGame::AlchymeGame() {}
 
+void AlchymeGame::StartIOThread() {
+	m_ctxThread = std::thread([this]() {
+		el::Helpers::setThreadName("io");
+		m_ctx.run();
+	});
+
+#ifdef _WIN32
+	void* pThr = m_ctxThread.native_handle();
+	SetThreadDescription(pThr, L"IOThread");
+#endif
+}
+
+void AlchymeGame::StopIOThread() {
+	m_ctx.stop();
+
+	if (m_ctxThread.joinable())
+		m_ctxThread.join();
+
+	m_ctx.restart();
 }
 
 void AlchymeGame::Start() {
+	m_running = true;
+
 	while (m_running) {
 		auto now = std::chrono::steady_clock::now();
 		static auto last_tick = now;
@@ -12,30 +34,13 @@ void AlchymeGame::Start() {
 		last_tick = now;
 
 		// Dispatch tasks
-		while (!m_taskQueue.empty()) {
+		while (!m_tasks.empty()) {
 			const auto now = std::chrono::steady_clock::now();
-			if (m_taskQueue.front().at < now)
-				m_taskQueue.pop_front().function();
+			if (m_tasks.front().at < now)
+				m_tasks.pop_front().function();
 		}
 
-		// Network IO RPC operations
-		//	The difference between server and client here
-		//	is that client has only 1 RPC,
-		//	server has potentially many
-		//	---
-		//	So maybe add a injection here to call to a implemetation
-		//	dependent RPC handler, either for client or server
 		PreUpdate(elapsed / 1000000.f);
-		//for (auto&& it = m_rpcs.begin(); it != m_rpcs.end();) {
-		//	if ((*it)->m_socket->WasDisconnected()) {
-		//		DisconnectCallback(it->get());
-		//		it = m_rpcs.erase(it);
-		//	}
-		//	else {
-		//		(*it)->Update();
-		//		++it;
-		//	}
-		//}
 
 		// UPDATE
 		Update(elapsed / 1000000.f);
@@ -47,13 +52,16 @@ void AlchymeGame::Start() {
 	}
 }
 
+void AlchymeGame::Stop() {
+	m_running = false;
+	StopIOThread();
+}
+
 void AlchymeGame::RunTask(std::function<void()> task) {
 	const auto now = std::chrono::steady_clock::now();
-	m_taskQueue.push_back({ now, std::move(task) });
+	m_tasks.push_back({ now, std::move(task) });
 }
 
 void AlchymeGame::RunTaskLater(std::function<void()> task, std::chrono::steady_clock::time_point at) {
-	m_taskQueue.push_back({ at, std::move(task) });
+	m_tasks.push_back({ at, std::move(task) });
 }
-
-

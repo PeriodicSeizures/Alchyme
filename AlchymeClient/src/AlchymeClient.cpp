@@ -1,38 +1,29 @@
-#include "Client.hpp"
+#include <SDL.h>
 #include "Script.hpp"
 #include <RmlUi/Core.h>
 #include <RmlUi/Debugger.h>
 #include <optick.h>
+#include "AlchymeClient.h"
 
-std::unique_ptr<Client> client;
+static std::unique_ptr<AlchymeClient> client;
 
-Client* Client::GetClient() {
+AlchymeClient *AlchymeClient::Get() {
 	return client.get();
 }
 
-void Client::RunClient() {
-	client = std::make_unique<Client>();
-	client->Run();
+void AlchymeClient::Run() {
+	client = std::make_unique<AlchymeClient>();
+	client->Start();
 	client.reset();
 }
 
-Client::Client() {
-	World w("myworld.bin");
-	w.LoadHeaderSection(m_version, "MyWorld");
-	w.Save();
+AlchymeClient::AlchymeClient() {}
 
-	World w2("myworld.bin");
-	w2.LoadHeaderSection(m_version, "MyWorld");
-
-	//m_peer.name = "crazicrafter1";
-	//evk.run();
-	InitSDL();
-	InitGLEW();
-	InitRML();
-	ScriptManager::Init();
+Rpc* AlchymeClient::rpc() {
+	return m_rpc.get();
 }
 
-Client::~Client() {
+void AlchymeClient::Stop() {
 	ScriptManager::UnInit();
 
 	Rml::Shutdown();
@@ -43,7 +34,21 @@ Client::~Client() {
 	SDL_Quit();
 }
 
-void Client::InitSDL() {
+void AlchymeClient::Start() {
+
+	Connect("localhost", "8001");
+
+	InitSDL();
+	InitGLEW();
+	InitRML();
+	ScriptManager::Init();
+
+	AlchymeGame::Start();
+}
+
+
+
+void AlchymeClient::InitSDL() {
 
 #ifdef RMLUI_PLATFORM_WIN32
 	AllocConsole();
@@ -75,7 +80,7 @@ void Client::InitSDL() {
 	m_sdlRenderer = SDL_CreateRenderer(m_sdlWindow, oglIdx, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
 }
 
-void Client::InitGLEW() {
+void AlchymeClient::InitGLEW() {
 	GLenum err = glewInit();
 
 	if (err != GLEW_OK)
@@ -96,7 +101,7 @@ void Client::InitGLEW() {
 	SDL_GL_SetSwapInterval(1);
 }
 
-void Client::InitRML() {
+void AlchymeClient::InitRML() {
 
 	m_renderInterface = std::make_unique<MyRenderInterface>(m_sdlRenderer, m_sdlWindow);
 	m_systemInterface = std::make_unique<MySystemInterface>();
@@ -121,45 +126,88 @@ void Client::InitRML() {
 
 }
 
-void Client::ForwardPeerInfo(std::string username, std::string password) {
+
+
+void AlchymeClient::ForwardPeerInfo(std::string username, std::string password) {
 	if (serverAwaitingPeerInfo) {
 		m_peer.name = username;
-		GetRpc()->Invoke("PeerInfo", m_version, m_peer.name, password);
+		m_rpc->Invoke("PeerInfo", m_version, m_peer.name, password);
 		serverAwaitingPeerInfo = false;
 	}
 }
 
-/*
-*
-* server implementation
-*
-*/
 
-void Client::ConnectCallback(Rpc* rpc, ConnResult res) {
-	if (res == ConnResult::OK) {
-		rpc->Register("ClientHandshake", new Method(this, &Client::RPC_ClientHandshake));
-		rpc->Register("Print", new Method(this, &Client::RPC_Print));
-		rpc->Register("PeerInfo", new Method(this, &Client::RPC_PeerInfo));
-		rpc->Register("Error", new Method(this, &Client::RPC_Error));
 
-		rpc->Invoke("ServerHandshake");
-	}
-	else {
-		LOG(INFO) << "Failed to connect\n";
-		Disconnect();
-	}
+void AlchymeClient::Connect(std::string host, std::string port) {
+	if (this->m_rpc)
+		return;
+
+	this->m_rpc = std::make_unique<Rpc>(
+		std::make_shared<AsioSocket>(m_ctx));
+
+	std::cout << "Non garbage: " << m_rpc.get()->not_garbage;
+
+	LOG(INFO) << "Hopefully not garbage value: " << m_rpc.get()->not_garbage;
+
+	LOG(INFO) << "2nd Hopefully not garbage value: " << m_rpc.get()->not_garbage;
+
+	asio::ip::tcp::resolver resolver(m_ctx);
+	auto endpoints = resolver.resolve(asio::ip::tcp::v4(), host, port);
+
+	LOG(INFO) << "Connecting to " << host << ":" << port;
+
+	asio::async_connect(
+		m_rpc->m_socket->GetSocket(), endpoints.begin(), endpoints.end(),
+		[this](const asio::error_code& ec, asio::ip::tcp::resolver::results_type::iterator it) {
+
+		if (!ec) {
+			LOG(INFO) << "Successfully connected";
+
+			m_rpc->m_socket->Accept();
+
+			RunTask([this] {
+				ConnectCallback(m_rpc.get());
+			});
+		}
+		else {
+			if (ec == asio::error::timed_out) {
+				LOG(ERROR) << "Server took too long to respond";
+			}
+			else if (ec == asio::error::operation_aborted) {
+				LOG(ERROR) << "Connect operation aborted";
+			}
+			else if (ec == asio::error::not_found) {
+				LOG(ERROR) << "Cannot locate host";
+			}
+			else if (ec.value() == 10061) { // might be win32 only
+				LOG(ERROR) << "Cannot locate host (windows?)";
+			}
+			else {
+				LOG(ERROR) << std::string("Unknown connection error: ") + ec.message();
+			}
+
+			RunTask([this]() {
+				m_rpc.reset();
+				AlchymeGame::StopIOThread();
+			});
+		}
+	});
+
+	AlchymeGame::StartIOThread();
 }
 
-void Client::DisconnectCallback(Rpc* rpc) {
-	LOG(INFO) << "Disconnected from server";
+void AlchymeClient::PreUpdate(float delta) {
+	if (this->m_rpc)
+		if (m_rpc->m_socket->Closed()) {
+			DisconnectCallback(m_rpc.get());
+			m_rpc.reset();
+		}
+		else {
+			m_rpc->Update();
+		}
 }
 
-void Client::Update(float delta) {
-
-	OPTICK_EVENT();
-
-	// Update substructure
-
+void AlchymeClient::Update(float delta) {
 	ScriptManager::Event::OnUpdate(delta);
 
 	SDL_Event event;
@@ -234,4 +282,17 @@ void Client::Update(float delta) {
 		}
 	}
 	m_rmlContext->Update();
+}
+
+void AlchymeClient::ConnectCallback(Rpc* rpc) {
+	rpc->Register("ClientHandshake", new Method(this, &AlchymeClient::RPC_ClientHandshake));
+	rpc->Register("Print", new Method(this, &AlchymeClient::RPC_Print));
+	rpc->Register("PeerInfo", new Method(this, &AlchymeClient::RPC_PeerInfo));
+	rpc->Register("Error", new Method(this, &AlchymeClient::RPC_Error));
+
+	rpc->Invoke("ServerHandshake");
+}
+
+void AlchymeClient::DisconnectCallback(Rpc* rpc) {
+	LOG(INFO) << "Disconnected";
 }
