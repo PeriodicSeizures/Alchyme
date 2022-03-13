@@ -2,8 +2,8 @@
 #include <easylogging++.h>
 #include <robin_hood.h>
 #include <memory>
-#include "../Utils.h"
-#include "../Packet.h"
+#include "Utils.h"
+#include "Packet.h"
 
 INITIALIZE_EASYLOGGINGPP
 

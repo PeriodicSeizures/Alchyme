@@ -5,7 +5,7 @@
 #include <fstream>
 #include <filesystem>
 #include "AlchymeServer.hpp"
-#include "../Utils.h"
+#include "Utils.h"
 //#include "FastBuffer.hpp"
 
 INITIALIZE_EASYLOGGINGPP

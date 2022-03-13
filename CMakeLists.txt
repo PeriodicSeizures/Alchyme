@@ -239,53 +239,93 @@ target_link_libraries(RmlCore freetype lua)
 # Linking
 #
 
-#add_library(Alchyme
-#    "src/AlchymeClient.h"
-#    "src/MyFileInterface.h"
-#    "src/MyRenderInterface.h"
-#    "src/MySystemInterface.h"
-#    "src/Script.h"
+#add_executable(Alchyme
+#    "src/client/AlchymeClient.cpp"
+#    "src/client/ClientRpc.cpp" 
+#    "src/client/MyFileInterface.cpp" 
+#    "src/client/MyRenderInterface.cpp" 
+#    "src/client/MySystemInterface.cpp" 
+#    "src/client/Script.cpp" 
 #
-#    "src/AlchymeServer.hpp"
+#    "src/server/AlchymeServer.cpp" 
+#    "src/server/AlchymeServerRpc.cpp"
+#    
+#    "src/AlchymeGame.cpp" 
+#    "src/AsioSocket.cpp"
+#    "src/NetPeer.cpp" 
+#    "src/Packet.cpp" 
+#    "src/Rpc.cpp" 
+#    "src/Utils.cpp"
 #
-#    "src/AlchymeGame.h"
-#    "src/AsyncDeque.hpp"
-#    "src/Method.h"
-#    "src/NetPeer.h"
-#    "src/Packet.h"
-#    "src/Rpc.h"
-#    "src/Socket.h"
-#    "src/Task.h"
-#    "src/Utils.h"
+#    "src/Main.cpp"
 #)
 
-
-
-add_executable(Alchyme
+add_executable(AlchymeClient
     "src/client/AlchymeClient.cpp"
     "src/client/ClientRpc.cpp" 
     "src/client/MyFileInterface.cpp" 
     "src/client/MyRenderInterface.cpp" 
     "src/client/MySystemInterface.cpp" 
     "src/client/Script.cpp" 
-
-    "src/server/AlchymeServer.cpp" 
-    "src/server/AlchymeServerRpc.cpp"
     
     "src/AlchymeGame.cpp" 
+    "src/AsioSocket.cpp"
     "src/NetPeer.cpp" 
     "src/Packet.cpp" 
     "src/Rpc.cpp" 
     "src/Utils.cpp"
 
-    "src/Main.cpp"
+    "src/client/ClientMain.cpp"
 )
 
-target_include_directories(Alchyme PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_executable(AlchymeServer
+    "src/server/AlchymeServer.cpp" 
+    "src/server/AlchymeServerRpc.cpp"
+    
+    "src/AlchymeGame.cpp" 
+    "src/AsioSocket.cpp"
+    "src/NetPeer.cpp" 
+    "src/Packet.cpp" 
+    "src/Rpc.cpp" 
+    "src/Utils.cpp"
 
-target_compile_features(Alchyme PRIVATE cxx_std_20)
+    "src/server/ServerMain.cpp"
+)
 
-target_link_libraries(Alchyme
+
+
+#target_include_directories(Alchyme PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+target_include_directories(AlchymeClient PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(AlchymeServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+
+
+#target_compile_features(Alchyme PRIVATE cxx_std_20)
+
+target_compile_features(AlchymeClient PRIVATE cxx_std_20)
+target_compile_features(AlchymeServer PRIVATE cxx_std_20)
+
+#target_link_libraries(Alchyme
+#    Threads::Threads
+#    asio
+#    robinhood
+#    OpenGL::GL
+#    glm
+#    stb
+#    easyloggingpp
+#    libglew_static
+#    #nlohmann_json::nlohmann_json
+#    SDL2-static
+#    SDL2main
+#    #OptickCore
+#    zlibstatic
+#    sol2
+#    RmlLua
+#    RmlDebugger	
+#)
+
+target_link_libraries(AlchymeClient
     Threads::Threads
     asio
     robinhood
@@ -304,25 +344,56 @@ target_link_libraries(Alchyme
     RmlDebugger	
 )
 
+target_link_libraries(AlchymeServer
+    Threads::Threads
+    asio
+    robinhood
+    easyloggingpp
+    #nlohmann_json::nlohmann_json
+    #OptickCore
+    zlibstatic
+    sol2
+)
+
+
+
 #include_directories(${CMAKE_SOURCE_DIR}/src)
 
 #set_target_properties(Alchyme OptickCore PROPERTIES
 #    RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
 #)
 
-set_target_properties(Alchyme PROPERTIES
+#set_target_properties(Alchyme PROPERTIES
+#    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
+#    CXX_EXTENSIONS OFF
+#    CXX_STANDARD_REQUIRED ON
+#)
+
+set_target_properties(AlchymeClient PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON
 )
 
-set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Alchyme)
+set_target_properties(AlchymeServer PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
+    CXX_EXTENSIONS OFF
+    CXX_STANDARD_REQUIRED ON
+)
+
+
+
+#set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Alchyme)
 
 if (MSVC)
-    target_compile_options(Alchyme PRIVATE /bigobj "/diagnostics:caret")
+    #target_compile_options(Alchyme PRIVATE /bigobj "/diagnostics:caret")
+    target_compile_options(AlchymeClient PRIVATE /bigobj "/diagnostics:caret")
+    target_compile_options(AlchymeServer PRIVATE /bigobj "/diagnostics:caret")
 endif()
 if(MSVC AND CMAKE_BUILD_TYPE MATCHES Release)
-    set_target_properties(Alchyme PROPERTIES WIN32_EXECUTABLE ON)
+    #set_target_properties(Alchyme PROPERTIES WIN32_EXECUTABLE ON)
+    set_target_properties(AlchymeClient PROPERTIES WIN32_EXECUTABLE ON)
+    set_target_properties(AlchymeServer PROPERTIES WIN32_EXECUTABLE ON)
 endif()
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data
