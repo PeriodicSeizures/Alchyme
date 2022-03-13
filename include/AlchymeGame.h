@@ -21,7 +21,14 @@ protected:
 	AsyncDeque<Task> m_tasks;
 
 public:
-	AlchymeGame();
+	const bool m_isServer;
+
+public:
+	static AlchymeGame* Get();
+	static void RunClient();
+	static void RunServer();
+
+	AlchymeGame(bool isServer);
 	//virtual ~AlchymeGame();
 
 	virtual void Start();

@@ -34,7 +34,6 @@ class AlchymeServer : public AlchymeGame {
 
 public:
 	static AlchymeServer* Get();
-	static void Run();
 
 	AlchymeServer();
 

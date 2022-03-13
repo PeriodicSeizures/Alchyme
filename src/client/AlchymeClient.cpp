@@ -4,18 +4,11 @@
 #include <RmlUi/Debugger.h>
 #include "Script.hpp"
 
-static std::unique_ptr<AlchymeClient> client;
-
 AlchymeClient *AlchymeClient::Get() {
-	return client.get();
+	return static_cast<AlchymeClient*>(AlchymeGame::Get());
 }
 
-void AlchymeClient::Run() {
-	client = std::make_unique<AlchymeClient>();
-	client->Start();
-}
-
-AlchymeClient::AlchymeClient() {}
+AlchymeClient::AlchymeClient() : AlchymeGame(false) {}
 
 void AlchymeClient::Stop() {
 	ScriptManager::UnInit();

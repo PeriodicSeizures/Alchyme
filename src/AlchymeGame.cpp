@@ -1,6 +1,26 @@
 #include "AlchymeGame.h"
+#include "AlchymeClient.h"
+#include "AlchymeServer.hpp"
 
-AlchymeGame::AlchymeGame() {}
+static std::unique_ptr<AlchymeGame> impl;
+
+AlchymeGame* AlchymeGame::Get() {
+	return impl.get();
+}
+
+void AlchymeGame::RunClient() {
+	impl = std::make_unique<AlchymeClient>();
+	impl->Start();
+}
+
+void AlchymeGame::RunServer() {
+	impl = std::make_unique<AlchymeServer>();
+	impl->Start();
+}
+
+AlchymeGame::AlchymeGame(bool isServer)
+	: m_isServer(m_isServer)
+{}
 
 void AlchymeGame::StartIOThread() {
 	m_ctxThread = std::thread([this]() {

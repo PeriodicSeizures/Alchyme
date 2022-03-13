@@ -1,28 +1,16 @@
 // AlchymeServer
 //
 
-#include <iostream>
-#include <fstream>
-#include <filesystem>
-#include "AlchymeServer.hpp"
+#include "AlchymeGame.h"
 #include "Utils.h"
-//#include "FastBuffer.hpp"
 
 INITIALIZE_EASYLOGGINGPP
 
-int main() {
-    //std::this_thread::
-
+int main(int argc, char** argv) 
+{
     initLogger();
 
-	AlchymeServer s;
-
-    try {
-        s.Start();
-    }
-    catch (std::exception& e) {
-        LOG(ERROR) << e.what();
-    }
+    AlchymeGame::RunServer();
 
 	return 0;
 }

@@ -31,19 +31,11 @@ static bool loadSettings(robin_hood::unordered_map<std::string, std::string>& se
 
 #define SETTING(key, def) (settings.emplace(key, def).first->second)
 
-std::unique_ptr<AlchymeServer> server;
-
 AlchymeServer* AlchymeServer::Get() {
-	return server.get();
+	return static_cast<AlchymeServer*>(AlchymeGame::Get());
 }
 
-void AlchymeServer::Run() {
-	server = std::make_unique<AlchymeServer>();
-	server->Start();
-	server.reset();
-}
-
-AlchymeServer::AlchymeServer() {}
+AlchymeServer::AlchymeServer() : AlchymeGame(true) {}
 
 //AlchymeServer::~AlchymeServer() {}
 

@@ -335,7 +335,7 @@ target_link_libraries(AlchymeClient
     easyloggingpp
     libglew_static
     #nlohmann_json::nlohmann_json
-    SDL2-static
+    #SDL2-static
     SDL2main
     #OptickCore
     zlibstatic
@@ -373,12 +373,14 @@ set_target_properties(AlchymeClient PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AlchymeClient"
 )
 
 set_target_properties(AlchymeServer PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
     CXX_EXTENSIONS OFF
     CXX_STANDARD_REQUIRED ON
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AlchymeServer"
 )
 
 
@@ -396,5 +398,11 @@ if(MSVC AND CMAKE_BUILD_TYPE MATCHES Release)
     set_target_properties(AlchymeServer PROPERTIES WIN32_EXECUTABLE ON)
 endif()
 
-file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data
-     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+#file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/data
+#     DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/client_data/data
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/AlchymeClient)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/server_data/data
+     DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/AlchymeServer)

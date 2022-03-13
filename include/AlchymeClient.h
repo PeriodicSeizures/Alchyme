@@ -25,7 +25,6 @@ class AlchymeClient : public AlchymeGame {
 
 public:
 	static AlchymeClient* Get();
-	static void Run();
 
 	AlchymeClient();
 
