@@ -233,6 +233,7 @@ CPMAddPackage(
     "BUILD_SAMPLES OFF"
     "BUILD_LUA_BINDINGS ON"
 )
+#target_compile_definitions(Alchyme PUBLIC RMLUI_STATIC_LIB)
 target_link_libraries(RmlCore freetype lua)
 
 #
@@ -260,23 +261,23 @@ target_link_libraries(RmlCore freetype lua)
 #    "src/Main.cpp"
 #)
 
-add_executable(AlchymeClient
-    "src/client/AlchymeClient.cpp"
-    "src/client/ClientRpc.cpp" 
-    "src/client/MyFileInterface.cpp" 
-    "src/client/MyRenderInterface.cpp" 
-    "src/client/MySystemInterface.cpp" 
-    "src/client/Script.cpp" 
-    
-    "src/AlchymeGame.cpp" 
-    "src/AsioSocket.cpp"
-    "src/NetPeer.cpp" 
-    "src/Packet.cpp" 
-    "src/Rpc.cpp" 
-    "src/Utils.cpp"
-
-    "src/client/ClientMain.cpp"
-)
+#add_executable(AlchymeClient
+#    "src/client/AlchymeClient.cpp"
+#    "src/client/ClientRpc.cpp" 
+#    "src/client/MyFileInterface.cpp" 
+#    "src/client/MyRenderInterface.cpp" 
+#    "src/client/MySystemInterface.cpp" 
+#    "src/client/Script.cpp" 
+#    
+#    "src/AlchymeGame.cpp" 
+#    "src/AsioSocket.cpp"
+#    "src/NetPeer.cpp" 
+#    "src/Packet.cpp" 
+#    "src/Rpc.cpp" 
+#    "src/Utils.cpp"
+#
+#    "src/client/ClientMain.cpp"
+#)
 
 add_executable(AlchymeServer
     "src/server/AlchymeServer.cpp" 
@@ -296,14 +297,14 @@ add_executable(AlchymeServer
 
 #target_include_directories(Alchyme PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_include_directories(AlchymeClient PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+#target_include_directories(AlchymeClient PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(AlchymeServer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 
 
 #target_compile_features(Alchyme PRIVATE cxx_std_20)
 
-target_compile_features(AlchymeClient PRIVATE cxx_std_20)
+#target_compile_features(AlchymeClient PRIVATE cxx_std_20)
 target_compile_features(AlchymeServer PRIVATE cxx_std_20)
 
 #target_link_libraries(Alchyme
@@ -325,24 +326,24 @@ target_compile_features(AlchymeServer PRIVATE cxx_std_20)
 #    RmlDebugger	
 #)
 
-target_link_libraries(AlchymeClient
-    Threads::Threads
-    asio
-    robinhood
-    OpenGL::GL
-    glm
-    stb
-    easyloggingpp
-    libglew_static
-    #nlohmann_json::nlohmann_json
-    #SDL2-static
-    SDL2main
-    #OptickCore
-    zlibstatic
-    sol2
-    RmlLua
-    RmlDebugger	
-)
+#target_link_libraries(AlchymeClient
+#    Threads::Threads
+#    asio
+#    robinhood
+#    OpenGL::GL
+#    glm
+#    stb
+#    easyloggingpp
+#    libglew_static
+#    #nlohmann_json::nlohmann_json
+#    #SDL2-static
+#    SDL2main
+#    #OptickCore
+#    zlibstatic
+#    sol2
+#    RmlLua
+#    RmlDebugger	
+#)
 
 target_link_libraries(AlchymeServer
     Threads::Threads
@@ -369,12 +370,12 @@ target_link_libraries(AlchymeServer
 #    CXX_STANDARD_REQUIRED ON
 #)
 
-set_target_properties(AlchymeClient PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
-    CXX_EXTENSIONS OFF
-    CXX_STANDARD_REQUIRED ON
-    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AlchymeClient"
-)
+#set_target_properties(AlchymeClient PROPERTIES
+#    VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
+#    CXX_EXTENSIONS OFF
+#    CXX_STANDARD_REQUIRED ON
+#    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/AlchymeClient"
+#)
 
 set_target_properties(AlchymeServer PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/run/
@@ -389,12 +390,12 @@ set_target_properties(AlchymeServer PROPERTIES
 
 if (MSVC)
     #target_compile_options(Alchyme PRIVATE /bigobj "/diagnostics:caret")
-    target_compile_options(AlchymeClient PRIVATE /bigobj "/diagnostics:caret")
+    #target_compile_options(AlchymeClient PRIVATE /bigobj "/diagnostics:caret")
     target_compile_options(AlchymeServer PRIVATE /bigobj "/diagnostics:caret")
 endif()
 if(MSVC AND CMAKE_BUILD_TYPE MATCHES Release)
     #set_target_properties(Alchyme PROPERTIES WIN32_EXECUTABLE ON)
-    set_target_properties(AlchymeClient PROPERTIES WIN32_EXECUTABLE ON)
+    #set_target_properties(AlchymeClient PROPERTIES WIN32_EXECUTABLE ON)
     set_target_properties(AlchymeServer PROPERTIES WIN32_EXECUTABLE ON)
 endif()
 
