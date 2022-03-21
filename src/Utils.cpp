@@ -7,7 +7,7 @@ void initLogger() {
 
     // https://github.com/amrayn/easyloggingpp#datetime-format-specifiers
     // [%fbase:L%line]
-    std::string format = "[%datetime{%H:%m:%s}] [%thread thread/%level]: %msg";
+    std::string format = "[%datetime{%H:%m:%s.%g}] [%thread thread/%level]: %msg";
     loggerConfiguration.set(el::Level::Info, el::ConfigurationType::Format, format);
     loggerConfiguration.set(el::Level::Error, el::ConfigurationType::Format, format);
     loggerConfiguration.set(el::Level::Fatal, el::ConfigurationType::Format, format);

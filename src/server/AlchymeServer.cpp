@@ -9,7 +9,8 @@ using namespace std::chrono_literals;
 static bool loadSettings(robin_hood::unordered_map<std::string, std::string>& settings) {
 	std::ifstream file;
 
-	file.open("C:\\Users\\Rico\\Documents\\VisualStudio2019\\Projects\\Alchyme\\AlchymeServer\\data\\settings.txt");
+	//file.open("C:\\Users\\Rico\\Documents\\VisualStudio2019\\Projects\\Alchyme\\AlchymeServer\\data\\settings.txt");
+	file.open("./data/server_data/settings.txt");
 	//file.open("data\\settings.txt");
 	if (file.is_open()) {
 		std::string line;
@@ -65,18 +66,18 @@ void AlchymeServer::Start() {
 	LOG(INFO) << "Starting server on *:" << port;
 	DoAccept();
 
-	RunTaskLaterRepeat([this]() {
-		for (auto& peer : m_peers) {
-			//auto& rpc = peer->Rpc();
-			//
-			//// test for online and nullifying or deleting
-			//if (rpc) {
-			//	if (!isWhitelisted(peer->m_key)
-			//		|| isIpBanned(rpc->m_socket->GetHostName()))
-			//		DisconnectLater(rpc.get());
-			//}
-		}
-	}, 0s, 5s);
+	//RunTaskLaterRepeat([this]() {
+	//	for (auto& peer : m_peers) {
+	//		auto& rpc = peer->Rpc();
+	//		
+	//		// test for online and nullifying or deleting
+	//		if (rpc) {
+	//			if (!isWhitelisted(peer->m_key)
+	//				|| isIpBanned(rpc->m_socket->GetHostName()))
+	//				DisconnectLater(rpc.get());
+	//		}
+	//	}
+	//}, 0s, 5s);
 
 	AlchymeGame::StartIOThread();
 	AlchymeGame::Start(); // Will begin loop
@@ -94,13 +95,11 @@ void AlchymeServer::DoAccept() {
 		if (!ec) {
 			auto sock = std::make_shared<AsioSocket>(m_ctx, std::move(socket));
 
-			LOG(INFO) << sock->GetHostName() << " has connected\n";
-
 			sock->Accept();
 
 			RunTask([this, sock]() {
 				auto peer = std::make_unique<NetPeer>(sock);
-				//ConnectCallback(peer->m_rpc.get());
+				ConnectCallback(peer->m_rpc.get());
 				m_peers.push_back(std::move(peer));
 			});
 		}
@@ -125,18 +124,18 @@ void AlchymeServer::DoAccept() {
 
 void AlchymeServer::Update(float dt) {
 	for (auto& peer : m_peers) {
-		//auto& rpc = peer->m_rpc;
-		//
-		//// test for online and nullifying or deleting
-		//if (rpc) {
-		//	if (rpc->m_socket->Status() == IOStatus::CLOSED) {
-		//		DisconnectCallback(rpc.get());
-		//		rpc.reset();
-		//	}
-		//	else {
-		//		peer->Update();
-		//	}
-		//}
+		auto& rpc = peer->m_rpc;
+		
+		// test for online and nullifying or deleting
+		if (rpc) {
+			if (rpc->m_socket->Status() == IOStatus::CLOSED) {
+				DisconnectCallback(rpc.get());
+				rpc.reset();
+			}
+			else {
+				peer->Update();
+			}
+		}
 	}
 
 	if (consoleFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
@@ -151,9 +150,10 @@ void AlchymeServer::Update(float dt) {
 
 
 void AlchymeServer::ConnectCallback(Rpc* rpc) {
-	rpc->Register("ServerHandshake", new Method(this, &AlchymeServer::RPC_ServerHandshake));
-
 	LOG(INFO) << rpc->m_socket->GetHostName() << " has connected";
+
+	LOG(INFO) << "Registered ServerHandshake()";
+	rpc->Register("ServerHandshake", new Method(this, &AlchymeServer::RPC_ServerHandshake));
 }
 
 void AlchymeServer::DisconnectCallback(Rpc* rpc) {

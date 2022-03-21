@@ -93,7 +93,7 @@ void AlchymeClient::InitRML() {
 
 	m_renderInterface = std::make_unique<MyRenderInterface>(m_sdlRenderer, m_sdlWindow);
 	m_systemInterface = std::make_unique<MySystemInterface>();
-	m_fileInterface = std::make_unique<MyFileInterface>("./data/");
+	m_fileInterface = std::make_unique<MyFileInterface>("./data/client_data/");
 
 	Rml::SetRenderInterface(m_renderInterface.get());
 	Rml::SetSystemInterface(m_systemInterface.get());
@@ -132,7 +132,7 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 
 	m_peer = std::make_unique<NetPeer>(std::make_shared<AsioSocket>(m_ctx));
 
-	//LOG(INFO) << "Non garbage: " << m_peer->m_rpc->not_garbage;
+	LOG(INFO) << "Non garbage: " << m_peer->m_rpc->not_garbage;
 
 	asio::ip::tcp::resolver resolver(m_ctx);
 	auto endpoints = resolver.resolve(asio::ip::tcp::v4(), host, port);
@@ -140,16 +140,14 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 	LOG(INFO) << "Connecting...";
 
 	asio::async_connect(
-		m_peer->Rpc()->m_socket->Socket(), endpoints.begin(), endpoints.end(),
+		m_peer->m_rpc->m_socket->Socket(), endpoints.begin(), endpoints.end(),
 		[this](const asio::error_code& ec, asio::ip::tcp::resolver::results_type::iterator it) {
 
 		if (!ec) {
-			LOG(INFO) << "Connected";
-
-			m_peer->Rpc()->m_socket->Accept();
+			m_peer->m_rpc->m_socket->Accept();
 
 			RunTask([this] {
-				ConnectCallback(m_peer->Rpc());
+				ConnectCallback(m_peer->m_rpc.get());
 			});
 		}
 		else {
@@ -163,7 +161,7 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 				LOG(ERROR) << "Cannot locate host";
 			}
 			else if (ec.value() == 10061) { // might be win32 only
-				LOG(ERROR) << "Cannot locate host (windows?)";
+				LOG(ERROR) << "Cannot locate host (win32)";
 			}
 			else {
 				LOG(ERROR) << std::string("Unknown connection error: ") + ec.message();
@@ -181,8 +179,8 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 
 void AlchymeClient::Update(float delta) {
 	if (m_peer)
-		if (m_peer->Rpc()->m_socket->Status() == IOStatus::CLOSED) {
-			DisconnectCallback(m_peer->Rpc());
+		if (m_peer->m_rpc->m_socket->Status() == IOStatus::CLOSED) {
+			DisconnectCallback(m_peer->m_rpc.get());
 			m_peer.reset();
 		}
 		else {
@@ -266,12 +264,21 @@ void AlchymeClient::Update(float delta) {
 }
 
 void AlchymeClient::ConnectCallback(Rpc* rpc) {
+	LOG(INFO) << "Connected";
+
 	rpc->Register("ClientHandshake", new Method(this, &AlchymeClient::RPC_ClientHandshake));
 	rpc->Register("Print", new Method(this, &AlchymeClient::RPC_Print));
 	rpc->Register("PeerInfo", new Method(this, &AlchymeClient::RPC_PeerInfo));
 	rpc->Register("Error", new Method(this, &AlchymeClient::RPC_Error));
 
-	rpc->Invoke("ServerHandshake", MAGIC);
+	RunTaskLater([rpc]() {
+		LOG(INFO) << "Invoking ServerHandshake()";
+		rpc->Invoke("ServerHandshake", MAGIC);
+	}, 1s); // should add somekind of gauranteed message order retriever
+	// will be easily possible with client
+	// client register initial function with rpc before connect
+	// server will invoke that pre-connect registered handler to continue
+	// procedural control-flow execution
 }
 
 void AlchymeClient::DisconnectCallback(Rpc* rpc) {

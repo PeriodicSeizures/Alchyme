@@ -4,7 +4,7 @@
 #include "Socket.h"
 #include "Rpc.h"
 
-class NetPeer {
+struct NetPeer {
 	//std::shared_ptr<AsioSocket> m_socket;
 
 	std::unique_ptr<Rpc> m_rpc;
@@ -14,14 +14,9 @@ class NetPeer {
 	std::string name;
 	bool authorized = false;
 
-public:
-	NetPeer(std::shared_ptr<AsioSocket> socket);
+	NetPeer(AsioSocket::Ptr socket);
 
 	void Update();
-
-	Rpc* Rpc() {
-		return m_rpc.get();
-	}
 };
 
 #endif

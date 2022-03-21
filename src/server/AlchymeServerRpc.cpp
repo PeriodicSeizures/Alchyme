@@ -1,7 +1,7 @@
 #include "AlchymeServer.hpp"
 
 void AlchymeServer::RPC_ServerHandshake(Rpc* rpc, int magic) {
-	LOG(DEBUG) << "ServerHandshake()!";
+	LOG(INFO) << "ServerHandshake()!";
 
 	if (magic != MAGIC)
 		Disconnect(rpc);
@@ -59,8 +59,8 @@ void AlchymeServer::RPC_BlacklistIp(Rpc* rpc, std::string host) {
 
 void AlchymeServer::RPC_BlacklistIpByName(Rpc* rpc, std::string name) {
 	NetPeer* peer = GetPeer(name);
-	if (peer && peer->Rpc()->m_socket)
-		addIpBan(peer->Rpc()->m_socket->GetHostName());
+	if (peer && peer->m_rpc->m_socket)
+		addIpBan(peer->m_rpc->m_socket->GetHostName());
 	else 
 		rpc->Invoke("Error", std::string("Player not found"));
 }

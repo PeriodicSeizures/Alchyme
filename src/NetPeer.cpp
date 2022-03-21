@@ -1,9 +1,11 @@
 #include "NetPeer.h"
 #include "AlchymeGame.h"
+#include <memory>
+#include "Rpc.h"
 
-NetPeer::NetPeer(std::shared_ptr<AsioSocket> socket)
-	//: m_rpc(std::make_unique<Rpc>(socket))
-	{}
+NetPeer::NetPeer(AsioSocket::Ptr socket) 
+	: m_rpc(std::make_unique<Rpc>(socket))
+{}
 
 void NetPeer::Update() {
 	if (m_rpc && m_rpc->m_socket) {

@@ -2,11 +2,16 @@
 #define TASK_H
 
 struct Task {
-	std::function<void()> function;
+	const std::function<void()> function;
 	std::chrono::steady_clock::time_point at;
 
 	// a period of 0 will denote no repeat
-	std::chrono::milliseconds period;
+	const std::chrono::milliseconds period;
+
+	bool repeats() {
+		using namespace std::chrono_literals;
+		return period > 0ms;
+	}
 };
 
 #endif

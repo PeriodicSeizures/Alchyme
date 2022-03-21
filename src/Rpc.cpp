@@ -1,7 +1,7 @@
 #include "Rpc.h"
 #include "Utils.h"
 
-Rpc::Rpc(std::shared_ptr<AsioSocket> socket) 
+Rpc::Rpc(AsioSocket::Ptr socket)
 	: m_socket(socket) {
 	this->not_garbage = 69;
 }

@@ -55,14 +55,19 @@ void AlchymeGame::Start() {
 		// Dispatch tasks
 		while (!m_tasks.empty()) {
 			const auto now = std::chrono::steady_clock::now();
-			auto&& front = m_tasks.front();
+			auto&& front = m_tasks.front(); // because tasks can repeat, this is not the best approach
 			if (front.at < now) {
 				front.function();
-				if (front.period > 0ms) {
+
+				m_tasks.pop_front();
+
+				if (front.repeats()) {
 					front.at += front.period;
+					bool was_empty = m_tasks.empty();
+					m_tasks.push_back(front);
+					if (was_empty) // just bad, remove me sometime
+						break;
 				}
-				else
-					m_tasks.pop_front();
 			}
 		}
 
@@ -94,7 +99,7 @@ void AlchymeGame::RunTaskLater(std::function<void()> task, std::chrono::millisec
 }
 
 void AlchymeGame::RunTaskAt(std::function<void()> task, std::chrono::steady_clock::time_point at) {
-	RunTaskAtRepeat(task,at, 0ms);
+	RunTaskAtRepeat(task, at, 0ms);
 }
 
 void AlchymeGame::RunTaskLaterRepeat(std::function<void()> task, std::chrono::milliseconds after, std::chrono::milliseconds period) {

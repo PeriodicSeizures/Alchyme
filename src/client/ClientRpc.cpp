@@ -2,7 +2,7 @@
 #include "Script.hpp"
 
 void AlchymeClient::RPC_ClientHandshake(Rpc* rpc) {
-	LOG(DEBUG) << "ClientHandshake()!";
+	LOG(INFO) << "ClientHandshake()!";
 
 	serverAwaitingLogin = true;
 

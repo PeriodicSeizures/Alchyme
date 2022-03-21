@@ -16,7 +16,7 @@ public:
 	int not_garbage;
 
 public:
-	Rpc(std::shared_ptr<AsioSocket> m_socket);
+	Rpc(AsioSocket::Ptr socket);
 	~Rpc();
 
 	//									must be a ptr	
