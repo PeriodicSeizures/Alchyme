@@ -1,6 +1,6 @@
 #include "AlchymeServer.hpp"
 
-void AlchymeServer::RPC_ServerHandshake(Rpc* rpc, int magic) {
+void AlchymeServer::RPC_ServerHandshake(Rpc* rpc, int magic, ConnectMode mode, std::string version) {
 	LOG(INFO) << "ServerHandshake()!";
 
 	if (magic != MAGIC)
@@ -12,24 +12,38 @@ void AlchymeServer::RPC_ServerHandshake(Rpc* rpc, int magic) {
 		}
 		else {
 			rpc->Register("Print", new Method(this, &AlchymeServer::RPC_Print));
-			rpc->Register("PeerInfo", new Method(this, &AlchymeServer::RPC_PeerInfo));
-			rpc->Invoke("ClientHandshake");
+			
+			//rpc->Invoke("ClientHandshake");
+			if (mode == ConnectMode::STATUS) {
+				// then send back the info of this server
+
+				// RPC_ModeStatus(serverName, serverBirthDate, serverUpTime, serverStartTime, serverConnections, serverHead, serverDesc)
+				rpc->Invoke("ModeStatus", m_serverName, VERSION, m_serverBirthDate, m_serverUpTime, m_serverStartTime, m_openConnections, m_serverHead, m_serverDesc);
+			}
+			else if (mode == ConnectMode::LOGIN) {
+				if (!version.compare(VERSION)) {
+					rpc->Invoke("Error", std::string("wrong version; need: ") + VERSION);
+
+					// schedule a disconnect
+					DisconnectLater(rpc);
+				}
+				else {
+					rpc->Register("LoginInfo", new Method(this, &AlchymeServer::RPC_LoginInfo));
+					// await info?
+					rpc->Invoke("ModeLogin", VERSION);
+				}
+
+			}
+
 		}
 	}
 }
 
-void AlchymeServer::RPC_PeerInfo(Rpc* rpc,
-	std::string version,
+void AlchymeServer::RPC_LoginInfo(Rpc* rpc,
 	std::string name,
 	std::string key) {
-	// assert version, name, hash
-	if (version != m_version) {
-		rpc->Invoke("Error", std::string("wrong version; need: ") + this->m_version);
 
-		// schedule a disconnect
-		DisconnectLater(rpc);
-		return;
-	}
+	LOG(INFO) << "Received LoginInfo";
 
 	if (!isWhitelisted(key)) {
 		rpc->Invoke("Error", std::string("not whitelisted"));
@@ -41,12 +55,12 @@ void AlchymeServer::RPC_PeerInfo(Rpc* rpc,
 
 	auto peer = this->GetPeer(rpc);
 
-	//peer->m_uid = StrHash(name.c_str());
-	//peer->m_key = key;
-	//peer->name = name;
+	peer->m_uid = Utils::StrHash(name.c_str());
+	peer->m_key = key;
+	peer->name = name;
 
-	//rpc->Invoke("PeerInfo",
-	//	peer->m_uid, StrHash("my world"), size_t(0));
+	rpc->Invoke("PeerInfo",
+		peer->m_uid, Utils::StrHash("my world"), size_t(0));
 }
 
 void AlchymeServer::RPC_Print(Rpc* rpc, std::string s) {

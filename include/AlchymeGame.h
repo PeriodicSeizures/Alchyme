@@ -4,21 +4,33 @@
 #include <thread>
 #include <asio.hpp>
 #include "AsyncDeque.hpp"
+#include <semaphore>
 #include "Task.h"
 #include "Rpc.h"
 
 using namespace asio::ip;
 
+enum class ConnectMode : uint8_t {
+	STATUS,
+	LOGIN,
+};
+
 class AlchymeGame {
+private:
+	bool m_running = false;
+
+	// perfect structure for this job
+	// https://stackoverflow.com/questions/2209224/vector-vs-list-in-stl
+	std::list<Task> m_tasks;
+
+	std::counting_semaphore<3> m_taskBaton;
+
 protected:
 	static constexpr int MAGIC = 0xABCDEF69;
+	static constexpr const char* VERSION = "1.0.0";
 
 	std::thread m_ctxThread;
 	asio::io_context m_ctx;
-
-	bool m_running = false;
-
-	AsyncDeque<Task> m_tasks;
 
 public:
 	const bool m_isServer;

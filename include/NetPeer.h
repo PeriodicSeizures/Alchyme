@@ -17,6 +17,14 @@ struct NetPeer {
 	NetPeer(AsioSocket::Ptr socket);
 
 	void Update();
+
+	bool isOpen() {
+		return m_rpc && m_rpc->m_socket->Status() == IOStatus::OPEN;
+	}
+
+	bool isClosed() {
+		return !m_rpc || m_rpc->m_socket->Status() == IOStatus::CLOSED;
+	}
 };
 
 #endif

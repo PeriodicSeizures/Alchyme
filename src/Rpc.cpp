@@ -11,7 +11,7 @@ Rpc::~Rpc() {
 }
 
 void Rpc::Register(const char* name, IMethod *method) {
-	uint16_t hash = static_cast<uint16_t>(StrHash(name));
+	uint16_t hash = static_cast<uint16_t>(Utils::StrHash(name));
 
 	#ifndef _NDEBUG
 		if (m_methods.find(hash) != m_methods.end())
@@ -40,7 +40,7 @@ void Rpc::Process(Packet *packet) {
 	else {
 		LOG(ERROR) << "Remote tried invoking unknown function (corrupt or malicious)";
 		//Invoke("Error", std::string("Unknown function"));
-		m_socket->Close();
+		m_socket->Close(IOClosure::ILLEGAL);
 		//throw std::runtime_error("Remote tried invoking unknown function");
 	}	
 }

@@ -19,7 +19,7 @@ void AlchymeGame::RunServer() {
 }
 
 AlchymeGame::AlchymeGame(bool isServer)
-	: m_isServer(m_isServer)
+	: m_taskBaton(1), m_isServer(m_isServer)
 {}
 
 void AlchymeGame::StartIOThread() {
@@ -52,24 +52,47 @@ void AlchymeGame::Start() {
 		auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - last_tick).count();
 		last_tick = now;
 
-		// Dispatch tasks
-		while (!m_tasks.empty()) {
+		// to avoid blocking the main thread
+		if (m_taskBaton.try_acquire()) {
 			const auto now = std::chrono::steady_clock::now();
-			auto&& front = m_tasks.front(); // because tasks can repeat, this is not the best approach
-			if (front.at < now) {
-				front.function();
+			for (auto itr = m_tasks.begin(); itr != m_tasks.end();) {
 
-				m_tasks.pop_front();
 
-				if (front.repeats()) {
-					front.at += front.period;
-					bool was_empty = m_tasks.empty();
-					m_tasks.push_back(front);
-					if (was_empty) // just bad, remove me sometime
-						break;
+				if (itr->at < now) {
+					itr->function();
+					if (itr->repeats()) {
+						itr->at += itr->period;
+						++itr;
+					}
+					else
+						itr = m_tasks.erase(itr);
 				}
+				else
+					++itr;
 			}
+			m_taskBaton.release();
 		}
+		// Dispatch tasks
+		//while (!m_tasks.empty()) {
+		//
+		//	const auto now = std::chrono::steady_clock::now();
+		//	auto front = m_tasks.front(); // because tasks can repeat, this is not the best approach
+		//	if (front.at < now) {
+		//		front.function();
+		//
+		//		m_tasks.pop_front();
+		//
+		//		if (front.repeats()) {
+		//			front.at += front.period;
+		//			//bool was_empty = m_tasks.empty();
+		//			m_tasks.push_back(std::move(front));
+		//			//if (was_empty) // just bad, remove me sometime
+		//			//	break;
+		//		}
+		//	}
+		//}
+
+		
 
 		// UPDATE
 		Update(elapsed / 1000000.f);
@@ -107,5 +130,7 @@ void AlchymeGame::RunTaskLaterRepeat(std::function<void()> task, std::chrono::mi
 }
 
 void AlchymeGame::RunTaskAtRepeat(std::function<void()> task, std::chrono::steady_clock::time_point at, std::chrono::milliseconds period) {
+	m_taskBaton.acquire();
 	m_tasks.push_back({ task, at, period });
+	m_taskBaton.release();
 }

@@ -10,7 +10,7 @@ namespace ScriptManager {
 
 	namespace Event {
 		/// Event calls
-		void OnHandshake();
+		void OnLogin();
 		void OnUpdate(float delta);
 	}
 };

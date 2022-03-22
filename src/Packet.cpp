@@ -1,55 +1,61 @@
 #include "Packet.h"
 
-//uint16_t Packet::GetSize() {
-//    uint16_t size = 0;
-//    Read(size);
-//    return size;
+//bool Packet::Read(void* out, size_t size) {
+//    if (offset + size > m_buf.size())
+//        return false;
+//
+//    //    destination, source
+//    std::memcpy(out, m_buf.data() + offset, size);
+//
+//    offset += size;
+//
+//    return true;
 //}
 
-bool Packet::Read(void* out, size_t _Size) {
-    if (offset + _Size > m_buf.size())
-        return false;
-
-    //    destination, source
-    std::memcpy(out, m_buf.data() + offset, _Size);
-
-    offset += _Size;
-
-    return true;
-}
-
 bool Packet::Read(std::string &out) {
-    size_t _Size; if (!Read(&_Size, sizeof(_Size))) return false;
+    std::uint_fast8_t size; if (!Read(size)) return false;
+    //if (size > 256)
+    //    return false;
 
-    if (_Size > 256)
-        return false;
-
-    out.resize(_Size);
+    if (size != 0) {
+        out.resize(size);
+        return Read(reinterpret_cast<std::byte*>(out.data()), size);
+    }
 
     // Will never read null terminating character into string
     // Also will never expect null terminating character to finalize string
-    return Read(out.data(), _Size);
+    
 }
 
-bool Packet::Write(void* in, size_t _Size) {
-    //if (offset + _Size > m_buf.size())
-      //  m_buf.resize(offset + _Size);
-        //return false;
-
-    //    destination, source
-    //std::memcpy(m_buf.data() + offset, in, _Size);
-    m_buf.insert(m_buf.end(), static_cast<char*>(in), static_cast<char*>(in) + _Size);
-
-    offset += _Size;
-
+bool Packet::Read(std::byte* out, std::size_t size) {
+    if (offset + size > m_buf.size())
+        return false;
+        //throw std::runtime_error("Buffer read overflow");
+    std::memcpy(out, m_buf.data() + offset, size);
+    offset += size;
     return true;
 }
 
-bool Packet::Write(std::string &in) {
-    size_t _Size = in.size(); if (!Write(&_Size, sizeof(_Size))) return false;
+//bool Packet::Read(const std::string_view out) {
+//    size_t size; if (!Read(size)) return false;
+//    
+//}
 
-    if (_Size > 256)
+
+
+void Packet::Write(const std::byte* in, std::size_t size) {
+    m_buf.insert(m_buf.end(), in, in + size);
+
+    offset += size;
+}
+
+bool Packet::Write(const std::string_view str) {
+    if (str.length() >= UINT8_MAX)
         return false;
 
-    return Write(in.data(), _Size);
+    // Write length
+    Write(static_cast<std::uint_fast8_t>(str.length()));
+    if (str.length() != 0)
+        Write(reinterpret_cast<const std::byte*>(&str[0]), str.length());
+    return true;
 }

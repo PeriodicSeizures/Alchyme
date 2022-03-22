@@ -9,13 +9,13 @@
 
 using namespace asio::ip;
 
-enum class IOStatus {
+enum class IOStatus : uint8_t {
 	INITIALIZING,
 	OPEN,
 	CLOSED,
 };
 
-enum class IOClosure {
+enum class IOClosure : uint8_t {
 	NONE,
 	LOCAL_CLOSE,
 	REMOTE_CLOSE,

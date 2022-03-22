@@ -108,6 +108,8 @@ void AlchymeClient::InitRML() {
 	m_rmlContext = Rml::CreateContext("default",
 		Rml::Vector2i(w, h));
 
+	//if (Rml::DataModelConstructor ctor = m_rmlContext->CreateDataModel(""))
+
 #ifndef NDEBUG
 	Rml::Debugger::Initialise(m_rmlContext);
 #endif
@@ -116,12 +118,22 @@ void AlchymeClient::InitRML() {
 
 
 
-void AlchymeClient::SendLogin(std::string username, std::string password) {
+void AlchymeClient::SendLogin(std::string username, std::string key) {
 	if (serverAwaitingLogin) {
-		//m_peer->name = username;
-		//m_peer->m_rpc->Invoke("LoginInfo", m_version, m_peer->name, password);
+		m_peer->name = username;
+		m_peer->m_rpc->Invoke("LoginInfo", m_peer->name, key);
 		serverAwaitingLogin = false;
 	}
+}
+
+
+
+void AlchymeClient::Disconnect() {
+	if (m_peer && m_peer->isOpen()) {
+		m_peer->m_rpc->m_socket->Close();
+	}// else 
+	//m_peer.reset();
+	//AlchymeClient::Get()->StopIOThread();
 }
 
 
@@ -136,6 +148,8 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 
 	asio::ip::tcp::resolver resolver(m_ctx);
 	auto endpoints = resolver.resolve(asio::ip::tcp::v4(), host, port);
+
+	m_peer->m_rpc->Register("ClientHandshake", new Method(this, &AlchymeClient::RPC_ClientHandshake));
 
 	LOG(INFO) << "Connecting...";
 
@@ -168,6 +182,8 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 			}
 
 			RunTask([this]() {
+				Disconnect();
+
 				m_peer.reset();
 				AlchymeGame::StopIOThread();
 			});
@@ -178,14 +194,15 @@ void AlchymeClient::Connect(std::string host, std::string port) {
 }
 
 void AlchymeClient::Update(float delta) {
-	if (m_peer)
-		if (m_peer->m_rpc->m_socket->Status() == IOStatus::CLOSED) {
+	if (m_peer) {
+		if (m_peer->isClosed()) {
 			DisconnectCallback(m_peer->m_rpc.get());
-			m_peer.reset();
+			//Disconnect();
 		}
 		else {
 			m_peer->Update();
 		}
+	}
 
 	ScriptManager::Event::OnUpdate(delta);
 
@@ -265,23 +282,12 @@ void AlchymeClient::Update(float delta) {
 
 void AlchymeClient::ConnectCallback(Rpc* rpc) {
 	LOG(INFO) << "Connected";
-
-	rpc->Register("ClientHandshake", new Method(this, &AlchymeClient::RPC_ClientHandshake));
-	rpc->Register("Print", new Method(this, &AlchymeClient::RPC_Print));
-	rpc->Register("PeerInfo", new Method(this, &AlchymeClient::RPC_PeerInfo));
-	rpc->Register("Error", new Method(this, &AlchymeClient::RPC_Error));
-
-	RunTaskLater([rpc]() {
-		LOG(INFO) << "Invoking ServerHandshake()";
-		rpc->Invoke("ServerHandshake", MAGIC);
-	}, 1s); // should add somekind of gauranteed message order retriever
-	// will be easily possible with client
-	// client register initial function with rpc before connect
-	// server will invoke that pre-connect registered handler to continue
-	// procedural control-flow execution
 }
 
 void AlchymeClient::DisconnectCallback(Rpc* rpc) {
 	LOG(INFO) << "Disconnected";
-	StopIOThread();
+	//StopIOThread();
+	m_peer.reset();
+	AlchymeClient::Get()->StopIOThread();
+	
 }

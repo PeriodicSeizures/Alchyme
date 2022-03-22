@@ -5,7 +5,7 @@ local mainScript = {
 	onEnable = nil,
 	onDisable = nil,
 	onUpdate = nil,
-	onHandshake = nil
+	onLogin = nil
 }
 
 function mainScript.onEnable() 
@@ -23,8 +23,8 @@ function mainScript.onEnable()
     uiMainMenu:Show()
 end
 
-function mainScript.onHandshake() 
-	print("Lua handshake called!")
+function mainScript.onLogin() 
+	print("Lua Login called!")
 	
 	local mainMenuDoc = {}
     local passwordDoc = {}

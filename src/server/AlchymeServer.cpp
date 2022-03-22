@@ -66,18 +66,18 @@ void AlchymeServer::Start() {
 	LOG(INFO) << "Starting server on *:" << port;
 	DoAccept();
 
-	//RunTaskLaterRepeat([this]() {
-	//	for (auto& peer : m_peers) {
-	//		auto& rpc = peer->Rpc();
-	//		
-	//		// test for online and nullifying or deleting
-	//		if (rpc) {
-	//			if (!isWhitelisted(peer->m_key)
-	//				|| isIpBanned(rpc->m_socket->GetHostName()))
-	//				DisconnectLater(rpc.get());
-	//		}
-	//	}
-	//}, 0s, 5s);
+	RunTaskLaterRepeat([this]() {
+		for (auto& peer : m_peers) {
+			auto& rpc = peer->m_rpc;
+			
+			// test for online and nullifying or deleting
+			if (rpc) {
+				if (!isWhitelisted(peer->m_key)
+					|| isIpBanned(rpc->m_socket->GetHostName()))
+					DisconnectLater(rpc.get());
+			}
+		}
+	}, 0s, 5s);
 
 	AlchymeGame::StartIOThread();
 	AlchymeGame::Start(); // Will begin loop
@@ -142,7 +142,39 @@ void AlchymeServer::Update(float dt) {
 		// get value and reassign
 		// do something with the input
 		std::string in = consoleFuture.get();
-		LOG(INFO) << "Got command: " << in;
+		//LOG(INFO) << "Got command: " << in;
+
+		auto split = Utils::split(in, " ");
+
+		if (split.size() >= 2) {
+			if (split[0] == "ipban") {
+				LOG(INFO) << "Banned ip " << split[1];
+				addIpBan(split[1]);
+			}
+			else if (split[0] == "unipban") {
+				LOG(INFO) << "Unbanned ip " << split[1];
+				removeIpBan(split[1]);
+			}
+			else if (split[0] == "whitelist") {
+				if (split[1] == "on")
+					m_useWhitelist = true;
+				else if (split[1] == "off")
+					m_useWhitelist = false;
+				else if (split.size() >= 3) {
+					if (split[1] == "add")
+						addToWhitelist(split[2]);
+					else if (split[1] == "remove")
+						removeFromWhitelist(split[2]);
+					else
+						LOG(ERROR) << "Unknown arg";
+				}
+				else
+					LOG(ERROR) << "Unknown arg";
+			}
+			else
+				LOG(ERROR) << "Unknown command";
+		}
+
 		consoleFuture = std::async(consoleInput);
 	}
 }
@@ -150,18 +182,20 @@ void AlchymeServer::Update(float dt) {
 
 
 void AlchymeServer::ConnectCallback(Rpc* rpc) {
+	m_openConnections++;
 	LOG(INFO) << rpc->m_socket->GetHostName() << " has connected";
 
 	LOG(INFO) << "Registered ServerHandshake()";
 	rpc->Register("ServerHandshake", new Method(this, &AlchymeServer::RPC_ServerHandshake));
+
+	rpc->Invoke("ClientHandshake", MAGIC);
 }
 
 void AlchymeServer::DisconnectCallback(Rpc* rpc) {
-	LOG(INFO) << rpc->m_socket->GetHostName() << " has disconnected";
+	m_openConnections--;
+	LOG(INFO) << rpc->m_socket->GetHostName() << " has disconnected (IOClosure: " << (int)rpc->m_socket->Status() << ")";
 	// experiment with this
 }
-
-
 
 NetPeer* AlchymeServer::GetPeer(size_t uid) {
 	for (auto&& peer : m_peers) {
@@ -187,33 +221,42 @@ NetPeer* AlchymeServer::GetPeer(Rpc* rpc) {
 	return nullptr;
 }
 
+//uint16_t AlchymeServer::GetOpenPeers() {
+//	uint16_t num = 0;
+//	for (auto&& peer : m_peers) {
+//		if (peer->isOpen())
+//			num++;
+//	}
+//	return num;
+//}
 
 
-void AlchymeServer::addIpBan(const std::string& host) {
-	m_bannedIps.insert(host);
+
+void AlchymeServer::addIpBan(std::string_view host) {
+	m_bannedIps.insert(host.data());
 }
 
-void AlchymeServer::addToWhitelist(const std::string& key) {
-	m_whitelist.insert(key);
+void AlchymeServer::addToWhitelist(std::string_view key) {
+	m_whitelist.insert(key.data());
 }
 
-void AlchymeServer::removeIpBan(const std::string& host) {
-	m_bannedIps.erase(host);
+void AlchymeServer::removeIpBan(std::string_view host) {
+	m_bannedIps.erase(host.data());
 }
 
-void AlchymeServer::removeFromWhitelist(const std::string& key) {
-	m_whitelist.erase(key);
+void AlchymeServer::removeFromWhitelist(std::string_view key) {
+	m_whitelist.erase(key.data());
 }
 
-bool AlchymeServer::isIpBanned(const std::string& host) {
-	return m_bannedIps.contains(host);
+bool AlchymeServer::isIpBanned(std::string_view host) {
+	return m_bannedIps.contains(host.data());
 }
 
-bool AlchymeServer::isWhitelisted(const std::string& key) {
+bool AlchymeServer::isWhitelisted(std::string_view key) {
 	if (m_useWhitelist)
 		return true;
 
-	return m_whitelist.contains(key);
+	return m_whitelist.contains(key.data());
 }
 
 

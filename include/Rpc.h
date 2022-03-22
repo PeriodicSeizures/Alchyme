@@ -47,7 +47,7 @@ public:
 	void Invoke(const char* name, Types... types) {
 		Packet* p = new Packet();
 		p->Write((uint8_t)0);
-		p->Write(static_cast<uint16_t>(StrHash(name)));
+		p->Write(static_cast<uint16_t>(Utils::StrHash(name)));
 
 		// Goes down the line, writing the type
 		Append_impl(p, types...); // 

@@ -6,33 +6,39 @@
 
 struct Packet {
     uint16_t offset = 0;
-    std::vector<char> m_buf;
+    std::vector<std::byte> m_buf;
     
     //uint16_t GetSize();
 
     /**
      * Readers 
     */
-    bool Read(void* out, size_t _Size);
-
-    template<typename T>
-    bool Read(T &out) {
-        static_assert(!std::is_pointer<T>::value, "Cannot read into raw pointer");
-        return Read(&out, sizeof(out));
-    }
+    //bool Read(void* out, size_t size);    
+    bool Read(std::byte* out, std::size_t size);
 
     bool Read(std::string &out);
+    //bool Read(const std::string_view out);
+
+    //template<typename T>
+    //bool Read(T &out) {
+    //    static_assert(!std::is_pointer<T>::value, "Cannot read into raw pointer");
+    //    return Read(&out, sizeof(out));
+    //}
+
+    template<typename T>
+    bool Read(T &out) requires std::is_trivially_copyable_v<T> {
+        return Read(reinterpret_cast<std::byte*>(&out), sizeof(out));
+    }
 
     /*
     * Writers
     */
-    bool Write(void* in, size_t _Size);
+    void Write(const std::byte*, std::size_t size);
+
+    bool Write(const std::string_view str);
 
     template<typename T>
-    bool Write(T in) {
-        static_assert(!std::is_pointer<T>::value, "Cannot write from raw pointer");
-        return Write(&in, sizeof(in));
+    void Write(const T in) requires std::is_trivially_copyable_v<T> {
+        Write(reinterpret_cast<const std::byte*>(&in), sizeof(in));
     }
-
-    bool Write(std::string &in);
 };

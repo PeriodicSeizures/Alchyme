@@ -18,8 +18,11 @@ class AlchymeClient : public AlchymeGame {
 	std::unique_ptr<MyFileInterface> m_fileInterface;
 
 	bool serverAwaitingLogin = false; 
-	const std::string m_version = "1.0.0";
+	//const std::string m_version = "1.0.0";
 	std::unique_ptr<NetPeer> m_peer;
+
+public:
+	ConnectMode m_mode = ConnectMode::STATUS;
 
 	//std::unique_ptr<Rpc> m_rpc;
 
@@ -33,7 +36,11 @@ public:
 
 	void Connect(std::string host, std::string port);
 
-	void SendLogin(std::string username, std::string password);
+	void SendLogin(std::string username, std::string key);
+
+	// Disconnect from the server
+	// The socket is closed internally
+	void Disconnect();
 
 private:
 	void Update(float delta) override;
@@ -44,7 +51,9 @@ private:
 	void InitGLEW();
 	void InitRML();
 
-	void RPC_ClientHandshake(Rpc* rpc);
+	void RPC_ClientHandshake(Rpc* rpc, int magic);
+	void RPC_ModeStatus(Rpc* rpc, std::string serverName, std::string serverVersion, long long serverBirthDate, long long serverUpTime, long long serverStartTime, uint16_t openConnections, std::string serverHead, std::string serverDesc);
+	void RPC_ModeLogin(Rpc* rpc, std::string serverVersion);
 	void RPC_PeerInfo(Rpc* rpc, size_t peerUid, size_t worldSeed, size_t worldTime);
 	void RPC_Print(Rpc* rpc, std::string s);
 	void RPC_Error(Rpc* rpc, std::string s);

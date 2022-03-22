@@ -2,14 +2,25 @@ function Test()
 	print('Hello world!')
 end
 
-function ConnectToServer(doc)
+function ServerStatus(doc)
 	-- API call
-	Alchyme.ConnectToServer(
+	Alchyme.ServerStatus(
 		doc:GetElementById('hostname-in'):GetAttribute('value')
 	)
 end
 
-function ForwardPeerInfo(doc)	
+function ServerJoin(doc)
+	-- API call
+	Alchyme.ServerJoin(
+		doc:GetElementById('hostname-in'):GetAttribute('value')
+	)
+end
+
+function ServerDisconnect(doc)
+	Alchyme.DisconnectFromServer()
+end
+
+function ServerLogin(doc)	
 	print("Lua ForwardPeerInfo")
 	
 	local connectingDoc = {}
@@ -22,7 +33,7 @@ function ForwardPeerInfo(doc)
 	doc:Hide()
 	connectingDoc:Show()
 	
-	Alchyme.ForwardPeerInfo(
+	Alchyme.SendLogin(
 		doc:GetElementById('username-in'):GetAttribute('value'),
 		doc:GetElementById('login-key-in'):GetAttribute('value')
 	)
