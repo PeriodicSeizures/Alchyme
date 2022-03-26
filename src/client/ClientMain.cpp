@@ -1,7 +1,7 @@
 ﻿// AlchymeClient
 //
 
-#include "AlchymeGame.h"
+#include "Game.h"
 #include "Utils.h"
 
 INITIALIZE_EASYLOGGINGPP
@@ -10,7 +10,7 @@ int main(int argc, char** argv)
 {
     initLogger();
 
-    AlchymeGame::RunClient();
+    Alchyme::Game::RunClient();
 
 	return 0;
 }

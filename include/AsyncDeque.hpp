@@ -1,5 +1,4 @@
-#ifndef ASYNCDEQUE_H
-#define ASYNCDEQUE_H
+#pragma once
 
 #include <memory>
 #include <thread>
@@ -123,5 +122,3 @@ protected:
 
 	bool notified = false;
 };
-
-#endif

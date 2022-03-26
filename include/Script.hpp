@@ -1,18 +1,17 @@
-#ifndef SCRIPT_H
-#define SCRIPT_H
+#pragma once
 
 #include <sol/sol.hpp>
 
-namespace ScriptManager {
-	void Init();
-	lua_State* GetLuaState();
-	void UnInit();
+namespace Alchyme {
+	namespace Scripting {
+		void Init();
+		lua_State* GetLuaState();
+		void UnInit();
 
-	namespace Event {
-		/// Event calls
-		void OnLogin();
-		void OnUpdate(float delta);
-	}
-};
-
-#endif
+		namespace Event {
+			/// Event calls
+			void OnLogin();
+			void OnUpdate(float delta);
+		}
+	};
+}

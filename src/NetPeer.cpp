@@ -1,33 +1,44 @@
-#include "NetPeer.h"
-#include "AlchymeGame.h"
+#include "NetPeer.hpp"
+#include "Client.hpp"
+#include "Server.hpp"
 #include <memory>
-#include "Rpc.h"
+#include "NetRpc.hpp"
 
-NetPeer::NetPeer(AsioSocket::Ptr socket) 
-	: m_rpc(std::make_unique<Rpc>(socket))
-{}
+namespace Alchyme {
+	namespace Net {
+		Peer::Peer(AsioSocket::Ptr socket)
+			: m_isServer(Game::Get()->m_isServer),
+			m_socket(socket),
+			m_rpc(std::make_unique<Rpc>(socket))
+		{}
 
-void NetPeer::Update() {
-	if (m_rpc && m_rpc->m_socket) {
-		int max = 100;
-		while (m_rpc->m_socket->GotNewData() && max-- >= 0) {
-			auto packet = std::shared_ptr<Packet>(m_rpc->m_socket->Next());
+		void Peer::Update() {
+			m_rpc->Update(this);
+		}
 
-			//int size = packet.GetSize();
-			uint8_t type = 0;
-			packet->Read(type);
+		/// TODO Move this to AlchymeServer
+		void Peer::Kick(std::string reason) {
+			assert(m_isServer);
 
-			// Rpc
-			if (type == 0) {
-				m_rpc->Process(packet.get());
+			if (m_authorized) {
+				m_rpc->Invoke("KickNotify", reason);
+				DisconnectLater();
 			}
 		}
 
-		if (m_rpc->m_socket->Status() == IOStatus::CLOSED) {
-			//AlchymeGame::DisconnectCallback(m_rpc.get());
-			// will now merge the two projects to allow for core functionality
-			// to bridge between both client and server
-			//rpc.reset();
+		void Peer::Disconnect() {
+			m_socket->Close();
+		}
+
+		void Peer::DisconnectLater() {
+			Game::Get()->RunTaskLater([this]() {
+				Disconnect();
+				//m_socket->Close();
+			}, 1s);
+		}
+
+		bool Peer::IsOnline() {
+			return m_socket->IsOnline();
 		}
 	}
 }

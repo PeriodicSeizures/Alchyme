@@ -280,21 +280,21 @@ target_link_libraries(RmlCore freetype lua)
 #)
 
 add_executable(Alchyme
-    "src/server/AlchymeServer.cpp" 
-    "src/server/AlchymeServerRpc.cpp"
-
-    "src/client/AlchymeClient.cpp"
+    "src/client/Client.cpp"
     "src/client/ClientRpc.cpp" 
     "src/client/MyFileInterface.cpp" 
     "src/client/MyRenderInterface.cpp" 
     "src/client/MySystemInterface.cpp" 
     "src/client/Script.cpp" 
+
+    "src/server/Server.cpp" 
+    "src/server/ServerRpc.cpp"
     
-    "src/AlchymeGame.cpp" 
-    "src/AsioSocket.cpp"
+    "src/Game.cpp" 
+    "src/NetAsioSocket.cpp"
     "src/NetPeer.cpp" 
-    "src/Packet.cpp" 
-    "src/Rpc.cpp" 
+    "src/NetPacket.cpp" 
+    "src/NetRpc.cpp" 
     "src/Utils.cpp"
 
     #"src/server/ServerMain.cpp"

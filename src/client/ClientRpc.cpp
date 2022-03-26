@@ -1,56 +1,60 @@
-#include "AlchymeClient.h"
+#include "Client.hpp"
 #include "Script.hpp"
 
-void AlchymeClient::RPC_ClientHandshake(Rpc* rpc, int magic) {
-	LOG(INFO) << "ClientHandshake()!";
+namespace Alchyme {
+	void Client::RPC_ClientHandshake(Net::Peer* peer, int magic) {
+		LOG(INFO) << "ClientHandshake()!";
 
-	if (magic != MAGIC) {
-		Disconnect();
+		auto rpc = peer->m_rpc.get();
+
+		if (magic != MAGIC) {
+			RPC_PeerResult(peer, PeerResult::BAD_MAGIC);
+			peer->Disconnect();
+		}
+		else {
+			rpc->Register("Print", new Net::Method(this, &Client::RPC_Print));
+			rpc->Register("PeerInfo", new Net::Method(this, &Client::RPC_PeerInfo));
+			rpc->Register("Error", new Net::Method(this, &Client::RPC_Error));
+
+			if (m_mode == ConnectMode::STATUS)
+				rpc->Register("ModeStatus", new Net::Method(this, &Client::RPC_ModeStatus));
+			else if (m_mode == ConnectMode::LOGIN)
+				rpc->Register("ModeLogin", new Net::Method(this, &Client::RPC_ModeLogin));
+
+			rpc->Invoke("ServerHandshake", MAGIC, m_mode, VERSION);
+		}
 	}
-	else {
-		rpc->Register("Print", new Method(this, &AlchymeClient::RPC_Print));
-		rpc->Register("PeerInfo", new Method(this, &AlchymeClient::RPC_PeerInfo));
-		rpc->Register("Error", new Method(this, &AlchymeClient::RPC_Error));
-		
-		if (m_mode == ConnectMode::STATUS)
-			rpc->Register("ModeStatus", new Method(this, &AlchymeClient::RPC_ModeStatus));
-		else if (m_mode == ConnectMode::LOGIN)
-			rpc->Register("ModeLogin", new Method(this, &AlchymeClient::RPC_ModeLogin));
 
-		//										modes
-		//										status, login, 
-		rpc->Invoke("ServerHandshake", MAGIC, m_mode, VERSION);
-		//serverAwaitingLogin = true;
-
-		//ScriptManager::Event::OnHandshake();
+	void Client::RPC_ModeStatus(Net::Peer* peer, std::string serverName, std::string serverVersion, long long serverBirthDate, long long serverUpTime, long long serverStartTime, uint16_t serverConnections, std::string serverHead, std::string serverDesc) {
+		LOG(INFO) << "Server Status: " << serverName << ", " << serverVersion << ", " << serverBirthDate << ", " << serverUpTime << ", " << serverStartTime << ", " << serverConnections << ", " << serverHead << ", " << serverDesc;
 	}
-}
 
-void AlchymeClient::RPC_ModeStatus(Rpc* rpc, std::string serverName, std::string serverVersion, long long serverBirthDate, long long serverUpTime, long long serverStartTime, uint16_t serverConnections, std::string serverHead, std::string serverDesc) {
-	LOG(INFO) << "Server Status: " << serverName << ", " << serverVersion << ", " << serverBirthDate << ", " << serverUpTime << ", " << serverStartTime << ", " << serverConnections << ", " << serverHead << ", " << serverDesc;
-}
+	void Client::RPC_ModeLogin(Net::Peer* peer, std::string serverVersion) {
+		LOG(INFO) << "Initiating Server Login...";
+		serverAwaitingLogin = true;
 
-void AlchymeClient::RPC_ModeLogin(Rpc* rpc, std::string serverVersion) {
-	LOG(INFO) << "Initiating Server Login...";
-	serverAwaitingLogin = true;
+		Scripting::Event::OnLogin();
+	}
 
-	ScriptManager::Event::OnLogin();
-}
+	void Client::RPC_PeerResult(Net::Peer* peer, PeerResult result) {
+		LOG(INFO) << "PeerResult: " << static_cast<uint8_t>(result);
+	}
 
-void AlchymeClient::RPC_PeerInfo(Rpc* rpc,
-	size_t peerUid,
-	size_t worldSeed,
-	size_t worldTime) {
+	void Client::RPC_PeerInfo(Net::Peer* peer,
+		size_t peerUid,
+		size_t worldSeed,
+		size_t worldTime) {
 
-	LOG(DEBUG) << "my uid: " << peerUid <<
-		", worldSeed: " << worldSeed <<
-		", worldTime: " << worldTime;
-}
+		LOG(DEBUG) << "my uid: " << peerUid <<
+			", worldSeed: " << worldSeed <<
+			", worldTime: " << worldTime;
+	}
 
-void AlchymeClient::RPC_Print(Rpc* rpc, std::string s) {
-	LOG(INFO) << "Remote print: " << s << "\n";
-}
+	void Client::RPC_Print(Net::Peer* peer, std::string s) {
+		LOG(INFO) << "Remote print: " << s << "\n";
+	}
 
-void AlchymeClient::RPC_Error(Rpc* rpc, std::string s) {
-	LOG(ERROR) << "Remote error: " << s << "\n";
+	void Client::RPC_Error(Net::Peer* peer, std::string s) {
+		LOG(ERROR) << "Remote error: " << s << "\n";
+	}
 }
