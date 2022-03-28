@@ -64,6 +64,26 @@ message(STATUS "Set _WIN32_WINNT=${_WIN32_WINNT}")
 target_compile_definitions(asio INTERFACE _WIN32_WINNT=${_WIN32_WINNT} WIN32_LEAN_AND_MEAN)
 endif()
 
+set(OPENSSL_ROOT_DIR "C:/Users/Rico/Documents/VisualStudio2019/Libraries/OpenSSL-Win64")
+set(Protobuf_LIBRARIES "C:/Users/Rico/Documents/VisualStudio2019/Libraries/protobuf-amd64/lib")
+set(Protobuf_INCLUDE_DIR "C:/Users/Rico/Documents/VisualStudio2019/Libraries/protobuf-amd64/include")
+
+find_package(OpenSSL REQUIRED)
+find_package(libprotobuf-dev) # protobuf-compiler
+
+CPMAddPackage(
+    NAME gamenetworkingsockets
+    GITHUB_REPOSITORY ValveSoftware/GameNetworkingSockets
+    GIT_TAG v1.4.0
+)
+add_library(gamenetworkingsockets INTERFACE)
+target_include_directories(gamenetworkingsockets SYSTEM INTERFACE ${gamenetworkingsockets_SOURCE_DIR}/src/include)
+target_compile_definitions(Alchyme INTERFACE STEAMNETWORKINGSOCKETS_STATIC_LINK)
+
+#target_link_libraries(gamenetworkingsockets OpenSSL::SSL)
+
+#find_package(libssl-dev)
+
 
 
 
@@ -262,7 +282,9 @@ add_executable(Alchyme
     "src/World.cpp"
 
     #"src/server/ServerMain.cpp"
-    "src/Main.cpp"
+    #"src/Main.cpp"
+
+    "src/GameNetworkingSockets.cpp"
 )
 
 
@@ -280,6 +302,9 @@ target_compile_features(Alchyme PRIVATE cxx_std_20)
 #target_compile_features(AlchymeServer PRIVATE cxx_std_20)
 
 target_link_libraries(Alchyme
+    gamenetworkingsockets
+
+
     Threads::Threads
     asio
     robinhood
