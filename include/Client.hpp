@@ -36,6 +36,8 @@ namespace Alchyme {
 
 		void SendLogin(std::string username, std::string key);
 
+		void Disconnect();
+
 	private:
 		void Update(float delta) override;
 		void ConnectCallback(Net::Peer* peer) override;
@@ -46,7 +48,7 @@ namespace Alchyme {
 		void InitRML();
 
 		void RPC_ClientHandshake(Net::Peer* peer, int magic);
-		void RPC_ModeStatus(Net::Peer* peer, std::string serverName, std::string serverVersion, long long serverBirthDate, long long serverUpTime, long long serverStartTime, uint16_t openConnections, std::string serverHead, std::string serverDesc);
+		void RPC_ModeStatus(Net::Peer* peer, std::string svTitle, std::string svDesc, std::chrono::seconds svCreateTime, std::chrono::seconds svStartTime, std::chrono::seconds svPrevUpDur, std::string svVer, size_t svConnections);
 		void RPC_ModeLogin(Net::Peer* peer, std::string serverVersion);
 		void RPC_PeerResult(Net::Peer* peer, PeerResult result);
 		void RPC_PeerInfo(Net::Peer* peer, size_t peerUid, size_t worldSeed, size_t worldTime);

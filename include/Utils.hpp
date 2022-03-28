@@ -19,6 +19,16 @@ namespace Alchyme {
 	// Player UID type
 	using UID = size_t;
 
+	struct TwoTupleHasher
+	{
+		template<typename A, typename B>
+		std::size_t operator()(const std::tuple<A, B>& tup) const
+		{
+			return ((std::hash<A>{}(std::get<0>(tup))
+				^ (std::hash<B>{}(std::get<1>(tup)) << 1) >> 1));
+		}
+	};
+
 	namespace Utils {
 		size_t constexpr StrHash(char const* input) {
 			return *input ? static_cast<size_t>(*input) + 33 * StrHash(input + 1) : 5381;

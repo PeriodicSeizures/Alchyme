@@ -23,21 +23,20 @@ namespace Alchyme {
 
 		// Banned addresses
 		robin_hood::unordered_set<std::string> m_banned;
-		bool m_useWhitelist;
-		uint16_t m_maxPeers;
-		size_t m_passwordHash;
+		bool m_useWhitelist = false;
+		uint16_t m_maxPeers = 10;
+		size_t m_passwordHash = 0;
 
 		std::unique_ptr<tcp::acceptor> m_acceptor;
 
-		// custom
-		std::string m_serverName;
-		std::chrono::seconds m_serverBirthDate; // const
-		std::chrono::seconds m_serverUpTime; //  (m_serverStartTime - now) + m_serverLastUpTime;
-		std::chrono::seconds m_serverStartTime; // increment on restart
-		std::string m_serverHead;
+		std::string m_serverTitle;
 		std::string m_serverDesc;
+		std::chrono::seconds m_serverCreateTime;
+		std::chrono::seconds m_serverStartTime;
+		std::chrono::seconds m_serverPrevUpDur;
 
-		std::chrono::seconds m_serverLastUpTime;
+		// from the 3 above chrono specifiers, the server age in seconds can be derived by
+		// totalUpTime = m_serverPrevUpDuration + (now - m_serverTimeStarted)
 
 	public:
 		static Server* Get();
@@ -52,6 +51,8 @@ namespace Alchyme {
 		bool UnBan(const std::string&);
 		bool RemoveFromWhitelist(const std::string&);
 		bool IsBanned(const std::string&);
+
+		void Kick(Net::Peer* peer, std::string reason = "");
 
 	private:
 		void Update(float delta) override;

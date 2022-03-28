@@ -16,25 +16,12 @@ namespace Alchyme {
 			m_rpc->Update(this);
 		}
 
-		/// TODO Move this to AlchymeServer
-		void Peer::Kick(std::string reason) {
-			assert(m_isServer);
-
-			if (m_authorized) {
-				m_rpc->Invoke("KickNotify", reason);
-				DisconnectLater();
-			}
-		}
-
 		void Peer::Disconnect() {
 			m_socket->Close();
 		}
 
 		void Peer::DisconnectLater() {
-			Game::Get()->RunTaskLater([this]() {
-				Disconnect();
-				//m_socket->Close();
-			}, 1s);
+			Game::Get()->DisconnectLater(this);
 		}
 
 		bool Peer::IsOnline() {

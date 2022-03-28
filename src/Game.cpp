@@ -29,7 +29,7 @@ namespace Alchyme {
 			m_ctx.run();
 		});
 
-#ifdef _WIN32
+#if defined(_WIN32)// && !defined(_NDEBUG)
 		void* pThr = m_ctxThread.native_handle();
 		SetThreadDescription(pThr, L"IO Thread");
 #endif
@@ -59,7 +59,7 @@ namespace Alchyme {
 				for (auto itr = m_tasks.begin(); itr != m_tasks.end();) {
 					if (itr->at < now) {
 						itr->function();
-						if (itr->repeats()) {
+						if (itr->Repeats()) {
 							itr->at += itr->period;
 							++itr;
 						}
@@ -105,4 +105,15 @@ namespace Alchyme {
 		std::scoped_lock lock(m_taskMutex);
 		m_tasks.push_back({ task, at, period });
 	}
+
+	void Game::Disconnect(Net::Peer* peer) {
+		peer->m_socket.reset();
+	}
+
+	void Game::DisconnectLater(Net::Peer* peer) {
+		RunTaskLater([peer]() {
+			peer->Disconnect();
+		}, 1s);
+	}
+
 }

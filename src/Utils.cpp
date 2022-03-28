@@ -14,6 +14,7 @@
 #define GRAY "\033[90m"
 
 namespace Alchyme {
+
     namespace Utils {
         void initLogger() {
             el::Configurations loggerConfiguration;

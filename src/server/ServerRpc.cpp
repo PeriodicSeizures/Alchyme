@@ -16,7 +16,7 @@ namespace Alchyme {
 				// send information about server
 
 				// RPC_ModeStatus(serverName, serverBirthDate, serverUpTime, serverStartTime, serverConnections, serverHead, serverDesc)
-				rpc->Invoke("ModeStatus", m_serverName, VERSION, m_serverBirthDate, m_serverUpTime, m_serverStartTime, m_peers.size(), m_serverHead, m_serverDesc);
+				rpc->Invoke("ModeStatus", m_serverTitle, m_serverDesc, m_serverCreateTime, m_serverStartTime, m_serverPrevUpDur, VERSION, m_peers.size());
 			}
 			else if (mode == ConnectMode::LOGIN) {
 				rpc->Register("LoginInfo", new Net::Method(this, &Server::RPC_LoginInfo));

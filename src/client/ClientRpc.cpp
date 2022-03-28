@@ -25,8 +25,8 @@ namespace Alchyme {
 		}
 	}
 
-	void Client::RPC_ModeStatus(Net::Peer* peer, std::string serverName, std::string serverVersion, long long serverBirthDate, long long serverUpTime, long long serverStartTime, uint16_t serverConnections, std::string serverHead, std::string serverDesc) {
-		LOG(INFO) << "Server Status: " << serverName << ", " << serverVersion << ", " << serverBirthDate << ", " << serverUpTime << ", " << serverStartTime << ", " << serverConnections << ", " << serverHead << ", " << serverDesc;
+	void Client::RPC_ModeStatus(Net::Peer* peer, std::string svTitle, std::string svDesc, std::chrono::seconds svCreateTime, std::chrono::seconds svStartTime, std::chrono::seconds svPrevUpDur, std::string svVer, size_t svConnections) {
+		LOG(INFO) << "Server Status: " << svTitle << ", " << svDesc << ", " << svCreateTime << ", " << svStartTime << ", " << svPrevUpDur << ", " << svVer << ", " << svConnections;
 	}
 
 	void Client::RPC_ModeLogin(Net::Peer* peer, std::string serverVersion) {

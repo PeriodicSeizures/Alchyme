@@ -63,10 +63,13 @@ namespace Alchyme {
 		void RunTaskLaterRepeat(std::function<void()> task, std::chrono::milliseconds after, std::chrono::milliseconds period);
 		void RunTaskAtRepeat(std::function<void()> task, std::chrono::steady_clock::time_point at, std::chrono::milliseconds period);
 
+		void Disconnect(Net::Peer *peer);
+
+		void DisconnectLater(Net::Peer* peer);
+
 	private:
 		virtual void Update(float delta) = 0;
 
-	public:
 		virtual void ConnectCallback(Net::Peer* peer) = 0;
 		virtual void DisconnectCallback(Net::Peer* peer) = 0;
 	};

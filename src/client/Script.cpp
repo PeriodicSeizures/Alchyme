@@ -54,7 +54,7 @@ namespace Alchyme {
 
 			void DisconnectFromServer() {
 				LOG(INFO) << "Lua disconnect invoked";
-				//Client::Get()->Disconnect();
+				Client::Get()->Disconnect();
 			}
 
 			void SendLogin(std::string username, std::string password) {
@@ -130,10 +130,6 @@ namespace Alchyme {
 
 		lua_State* GetLuaState() {
 			return lua.lua_state();
-		}
-
-		void UnInit() {
-			scripts.clear();
 		}
 
 		namespace Event {

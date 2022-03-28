@@ -11,9 +11,6 @@ namespace Alchyme {
 		// a period of 0 will denote no repeat
 		const std::chrono::milliseconds period;
 
-		bool repeats() {
-			using namespace std::chrono_literals;
-			return period > 0ms;
-		}
+		bool Repeats();
 	};
 }

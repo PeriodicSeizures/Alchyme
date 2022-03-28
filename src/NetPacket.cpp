@@ -1,4 +1,5 @@
 #include "NetPacket.hpp"
+#include <assert.h>
 
 namespace Alchyme {
     namespace Net {
@@ -6,6 +7,10 @@ namespace Alchyme {
             std::uint_fast8_t size; if (!Read(size)) return false;
 
             if (size != 0) {
+
+                if (size >= UINT8_MAX)
+                    throw std::runtime_error("String too long");
+
                 out.resize(size);
                 return Read(reinterpret_cast<std::byte*>(out.data()), size);
             }
@@ -29,15 +34,18 @@ namespace Alchyme {
             offset += size;
         }
 
-        bool Packet::Write(const std::string_view str) {
-            if (str.length() >= UINT8_MAX)
-                return false;
+        void Packet::Write(const std::string_view str) {
+            //assert(str.length() < UINT8_MAX);
+            //if (str.length() >= UINT8_MAX)
+                //return false;
+                //throw std::runtime_error("String too long");
 
             // Write length
-            Write(static_cast<std::uint_fast8_t>(str.length()));
+            //Write(static_cast<std::uint_fast8_t>(str.length()));
+            Write(str.length());
             if (str.length() != 0)
                 Write(reinterpret_cast<const std::byte*>(&str[0]), str.length());
-            return true;
+            //return true;
         }
     }
 }

@@ -16,17 +16,19 @@ namespace Alchyme {
             /**
              * Readers
             */
-            //bool Read(void* out, size_t size);    
             bool Read(std::byte* out, std::size_t size);
 
             bool Read(std::string& out);
-            //bool Read(const std::string_view out);
 
-            //template<typename T>
-            //bool Read(T &out) {
-            //    static_assert(!std::is_pointer<T>::value, "Cannot read into raw pointer");
-            //    return Read(&out, sizeof(out));
-            //}
+            template<typename T>
+            bool Read(std::vector<T> out) requires std::is_trivially_copyable_v<T> {
+                std::size_t length;
+                Read(length);
+                if (length != 0) {
+                    auto data = reinterpret_cast<T*>(m_buf.data());
+                    out.insert(out.end(), data, data + length);
+                }
+            }
 
             template<typename T>
             bool Read(T& out) requires std::is_trivially_copyable_v<T> {
@@ -38,7 +40,14 @@ namespace Alchyme {
             */
             void Write(const std::byte*, std::size_t size);
 
-            bool Write(const std::string_view str);
+            void Write(const std::string_view str);
+
+            template<typename T>
+            void Write(const std::vector<T> in) requires std::is_trivially_copyable_v<T> {
+                Write(in.size());
+                if (in.size() != 0)
+                    Write(reinterpret_cast<const std::byte*>(in.data()), in.size());
+            }
 
             template<typename T>
             void Write(const T in) requires std::is_trivially_copyable_v<T> {

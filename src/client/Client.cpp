@@ -12,7 +12,6 @@ namespace Alchyme {
 	Client::Client() : Game(false) {}
 
 	void Client::Stop() {
-		Scripting::UnInit();
 		Rml::Shutdown();
 		SDL_DestroyRenderer(m_sdlRenderer);
 		SDL_GL_DeleteContext(m_sdlGLContext);
@@ -118,6 +117,11 @@ namespace Alchyme {
 			m_peer->m_rpc->Invoke("LoginInfo", m_peer->m_name, key);
 			serverAwaitingLogin = false;
 		}
+	}
+
+	void Client::Disconnect() {
+		if (m_peer)
+			m_peer->Disconnect();
 	}
 
 

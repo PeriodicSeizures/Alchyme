@@ -240,45 +240,6 @@ target_link_libraries(RmlCore freetype lua)
 # Linking
 #
 
-#add_executable(Alchyme
-#    "src/client/AlchymeClient.cpp"
-#    "src/client/ClientRpc.cpp" 
-#    "src/client/MyFileInterface.cpp" 
-#    "src/client/MyRenderInterface.cpp" 
-#    "src/client/MySystemInterface.cpp" 
-#    "src/client/Script.cpp" 
-#
-#    "src/server/AlchymeServer.cpp" 
-#    "src/server/AlchymeServerRpc.cpp"
-#    
-#    "src/AlchymeGame.cpp" 
-#    "src/AsioSocket.cpp"
-#    "src/NetPeer.cpp" 
-#    "src/Packet.cpp" 
-#    "src/Rpc.cpp" 
-#    "src/Utils.cpp"
-#
-#    "src/Main.cpp"
-#)
-
-#add_executable(AlchymeClient
-#    "src/client/AlchymeClient.cpp"
-#    "src/client/ClientRpc.cpp" 
-#    "src/client/MyFileInterface.cpp" 
-#    "src/client/MyRenderInterface.cpp" 
-#    "src/client/MySystemInterface.cpp" 
-#    "src/client/Script.cpp" 
-#    
-#    "src/AlchymeGame.cpp" 
-#    "src/AsioSocket.cpp"
-#    "src/NetPeer.cpp" 
-#    "src/Packet.cpp" 
-#    "src/Rpc.cpp" 
-#    "src/Utils.cpp"
-#
-#    "src/client/ClientMain.cpp"
-#)
-
 add_executable(Alchyme
     "src/client/Client.cpp"
     "src/client/ClientRpc.cpp" 
@@ -290,12 +251,15 @@ add_executable(Alchyme
     "src/server/Server.cpp" 
     "src/server/ServerRpc.cpp"
     
+    "src/Chunk.cpp"
     "src/Game.cpp" 
     "src/NetAsioSocket.cpp"
     "src/NetPeer.cpp" 
     "src/NetPacket.cpp" 
     "src/NetRpc.cpp" 
+    "src/Task.cpp"
     "src/Utils.cpp"
+    "src/World.cpp"
 
     #"src/server/ServerMain.cpp"
     "src/Main.cpp"
@@ -333,57 +297,6 @@ target_link_libraries(Alchyme
     RmlLua
     RmlDebugger	
 )
-
-#target_link_libraries(AlchymeClient
-#    Threads::Threads
-#    asio
-#    robinhood
-#    OpenGL::GL
-#    glm
-#    stb
-#    easyloggingpp
-#    libglew_static
-#    #nlohmann_json::nlohmann_json
-#    #SDL2-static
-#    SDL2main
-#    #OptickCore
-#    zlibstatic
-#    sol2
-#    RmlLua
-#    RmlDebugger	
-#)
-
-#target_link_libraries(AlchymeServer
-#    Threads::Threads
-#    asio
-#    robinhood
-#    easyloggingpp
-#    #nlohmann_json::nlohmann_json
-#    #OptickCore
-#    zlibstatic
-#    sol2
-#)
-
-# new server executable
-#target_link_libraries(AlchymeServer
-#    Threads::Threads
-#    asio
-#    robinhood
-#    OpenGL::GL
-#    glm
-#    stb
-#    easyloggingpp
-#    libglew_static
-#    #nlohmann_json::nlohmann_json
-#    #SDL2-static
-#    SDL2main
-#    #OptickCore
-#    zlibstatic
-#    sol2
-#    RmlLua
-#    RmlDebugger	
-#)
-
 
 
 #include_directories(${CMAKE_SOURCE_DIR}/src)

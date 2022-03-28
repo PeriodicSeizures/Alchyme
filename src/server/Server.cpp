@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "Server.hpp"
+#include <string>
 #ifdef _WIN32
 #include <windows.h>
 #endif
@@ -56,6 +57,15 @@ namespace Alchyme {
 			throw std::runtime_error("could not load settings.txt");
 
 		m_useWhitelist = SETTING("use-whitelist", "false") == "true";
+		m_maxPeers = std::stoi(SETTING("max-peers", "10"));
+		m_passwordHash = Utils::StrHash(SETTING("password", "10").c_str());
+
+		m_serverTitle = SETTING("server-title", "My Alchyme server");
+		m_serverDesc = SETTING("server-desc", "the best server");
+		m_serverCreateTime = std::chrono::seconds(std::stoi(SETTING("server-creation-time", "0")));
+		m_serverStartTime = std::chrono::duration_cast<std::chrono::seconds>(
+			std::chrono::steady_clock::now().time_since_epoch());
+		m_serverPrevUpDur = std::chrono::seconds(std::stoi(SETTING("server-up-duration", "0")));
 
 		LoadUsers();
 
@@ -72,7 +82,7 @@ namespace Alchyme {
 				if (peer->m_authorized) {
 					PeerResult res;
 					if ((res = PeerAllowedToStay(peer.get())) != PeerResult::OK)
-						peer->Kick();
+						Kick(peer.get());
 				}
 			}
 		}, 0s, 5s);
@@ -160,7 +170,7 @@ namespace Alchyme {
 			peer->Update();
 		}
 
-		if (consoleFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+		if (consoleFuture.wait_for(0s) == std::future_status::ready) {
 			std::string in = consoleFuture.get();
 
 			auto split = Utils::split(in, ' ');
@@ -295,6 +305,12 @@ namespace Alchyme {
 
 	bool Server::IsBanned(const std::string& host) {
 		return m_banned.contains(host);
+	}
+
+	/// TODO Move this to AlchymeServer
+	void Server::Kick(Net::Peer* peer, std::string reason) {
+		peer->m_rpc->Invoke("KickNotify", reason);
+		DisconnectLater(peer);
 	}
 
 

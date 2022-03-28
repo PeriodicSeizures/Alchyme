@@ -24,7 +24,6 @@ namespace Alchyme {
 
 			void Update();
 
-			void Kick(std::string reason = "");
 			void Disconnect();
 			void DisconnectLater();
 			bool IsOnline();

@@ -6,7 +6,6 @@ namespace Alchyme {
 	namespace Scripting {
 		void Init();
 		lua_State* GetLuaState();
-		void UnInit();
 
 		namespace Event {
 			/// Event calls
