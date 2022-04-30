@@ -1,10 +1,7 @@
 #include <RmlUi/Core.h>
 
-#define STBI_NO_STDIO
-#define STB_IMAGE_IMPLEMENTATION
-#define STBI_ONLY_PNG
-#include <stb_image.h>
-
+#include "Utils.hpp"
+#include "ResourceManager.hpp"
 #include "MyRenderInterface.hpp"
 
 #if !(SDL_VIDEO_RENDER_OGL)
@@ -105,6 +102,8 @@ namespace Alchyme {
         Rml::FileHandle file_handle = file_interface->Open(source);
         if (!file_handle)
             return false;
+        
+
 
         file_interface->Seek(file_handle, 0, SEEK_END);
         auto buffer_size = file_interface->Tell(file_handle);

@@ -2,7 +2,7 @@
 #include <SDL.h>
 #include <RmlUi/Core.h>
 #include <RmlUi/Debugger.h>
-#include "Script.hpp"
+#include "ScriptManager.hpp"
 
 namespace Alchyme {
 	Client* Client::Get() {
@@ -26,7 +26,7 @@ namespace Alchyme {
 		InitSDL();
 		InitGLEW();
 		InitRML();
-		Scripting::Init();
+		ScriptManager::Init();
 
 		Game::Start();
 	}
@@ -191,7 +191,7 @@ namespace Alchyme {
 			}
 		}
 
-		Scripting::Event::OnUpdate(delta);
+		ScriptManager::Event::OnUpdate(delta);
 
 		SDL_Event event;
 

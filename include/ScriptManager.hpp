@@ -3,7 +3,7 @@
 #include <sol/sol.hpp>
 
 namespace Alchyme {
-	namespace Scripting {
+	namespace ScriptManager {
 		void Init();
 		lua_State* GetLuaState();
 

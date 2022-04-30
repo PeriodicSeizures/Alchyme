@@ -1,4 +1,4 @@
-#include "Script.hpp"
+#include "ScriptManager.hpp"
 #include <RmlUi/Core.h>
 #include <RmlUi/Lua.h>
 #include <sol/sol.hpp>
@@ -16,7 +16,7 @@ std::vector<Script> scripts;
 sol::state lua;
 
 namespace Alchyme {
-	namespace Scripting {
+	namespace ScriptManager {
 		namespace Api {
 			void RegisterScript(sol::table scriptTable) {
 				Script script = {

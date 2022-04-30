@@ -1,5 +1,5 @@
 #include "Client.hpp"
-#include "Script.hpp"
+#include "ScriptManager.hpp"
 
 namespace Alchyme {
 	void Client::RPC_ClientHandshake(Net::Peer* peer, int magic) {
@@ -33,7 +33,7 @@ namespace Alchyme {
 		LOG(INFO) << "Initiating Server Login...";
 		serverAwaitingLogin = true;
 
-		Scripting::Event::OnLogin();
+		ScriptManager::Event::OnLogin();
 	}
 
 	void Client::RPC_PeerResult(Net::Peer* peer, PeerResult result) {
